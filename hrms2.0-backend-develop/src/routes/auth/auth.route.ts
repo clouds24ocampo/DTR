@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { login, logout } from "src/controllers/auth/auth.controller";
+import { login, logout, registerSuperAdmin } from "src/controllers/auth/auth.controller";
 import {
   requestPasswordResetPin,
   verifyPasswordResetPin,
@@ -10,6 +10,7 @@ const router = Router();
 
 router.post("/login", login);
 router.post("/logout", logout);
+router.post("/register-admin", registerSuperAdmin);
 
 // Forgot password routes
 router.post("/forgot-password/request-pin", requestPasswordResetPin);

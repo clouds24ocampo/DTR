@@ -36,3 +36,14 @@ export const resetPasswordApi = async (email: string, pin: string, newPassword: 
   });
   return response;
 };
+
+export const registerSuperAdminApi = async (data: {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  username?: string;
+}) => {
+  const response = await axiosInstance.post("api/auth/register-admin", data);
+  return response;
+};
