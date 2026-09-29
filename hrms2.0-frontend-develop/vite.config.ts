@@ -20,7 +20,7 @@ export default defineConfig(({mode}) => {
     build: {
       outDir: "build/local",
       sourcemap: false,
-      minify: "esbuild",
+      minify: mode === "production" ? "esbuild" : false,
       chunkSizeWarningLimit: 6000,
       rollupOptions: {
         output: {
