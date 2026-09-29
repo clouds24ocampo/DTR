@@ -1,0 +1,21 @@
+{
+  "name": "hrms2.0-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HRMS 2.0 Fullstack Application",
+  "scripts": {
+    "predev": "node scripts/free-ports.js",
+    "dev": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "npm --prefix hrms2.0-backend-develop run dev",
+    "dev:frontend": "npm --prefix hrms2.0-frontend-develop run dev",
+    "build": "npm --prefix hrms2.0-backend-develop run build && npm --prefix hrms2.0-frontend-develop run build",
+    "build:release": "npm --prefix hrms2.0-backend-develop run build:release && npm --prefix hrms2.0-frontend-develop run build:release",
+    "build:backend": "npm --prefix hrms2.0-backend-develop run build",
+    "build:frontend": "npm --prefix hrms2.0-frontend-develop run build",
+    "test": "npm --prefix hrms2.0-backend-develop run test",
+    "seed:admin": "node scripts/create-admin.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

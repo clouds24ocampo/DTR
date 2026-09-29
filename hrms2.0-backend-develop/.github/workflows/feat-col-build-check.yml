@@ -1,0 +1,36 @@
+name: Feature Collaboration Build checks
+
+on:
+  push:
+    branches:
+      - feature/* # Runs on any feature branch for code review
+      - hotfix/*
+      - fix/*
+
+permissions:
+  contents: read # Allows reading the repository contents
+  issues: write # Grants permission to create GitHub issues
+
+jobs:
+  feat-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: npm ci || { echo "Install Clean Dependencies Failed."; exit 1; }
+      - name: Run Build Check
+        id: prod-build-check
+        run: npm run buildcheck || { echo "Compiling Production Turbo Build Failed."; exit 1; }
+        env:
+          NODE_ENV: test
+
+      - name: Create GitHub Issue on Build Check Failure
+        if: failure() && contains(steps.prod-build-check.outcome, 'failure')
+        uses: dacbd/create-issue-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # Uses GitHub's built-in token
+          title: "Error Found in Build Check"
+          body: "The latest production build check failed. Please review the logs."
+          labels: "build,production, CI/CD"

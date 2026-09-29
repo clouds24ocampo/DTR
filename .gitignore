@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+!*.env.example
+
+# Build outputs
+build/
+dist/
+*/build/
+*/dist/
+js-generated/
+
+# Uploads & Temporary files
+uploads/
+*/uploads/
+!uploads/.gitkeep
+!*/uploads/.gitkeep
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE & OS files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

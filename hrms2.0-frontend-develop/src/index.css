@@ -1,0 +1,341 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========== Theme: follows system (prefers-color-scheme) ========== */
+/* Light theme (default) */
+:root {
+  --theme-page-bg: linear-gradient(to bottom right, #f8fafc, #e2e8f0, #bfdbfe);
+  --theme-surface: rgba(255, 255, 255, 0.95);
+  --theme-surface-solid: rgb(248, 250, 252);
+  --theme-input-bg: rgb(241, 245, 249);
+  --theme-border: rgb(226, 232, 240);
+  --theme-border-muted: rgba(148, 163, 184, 0.5);
+  --theme-text: rgb(15, 23, 42);
+  --theme-text-muted: rgb(100, 116, 139);
+  --theme-accent-from: #3b82f6;
+  --theme-accent-to: #06b6d4;
+  --theme-accent-shadow: rgba(59, 130, 246, 0.35);
+  --theme-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+  --theme-ring-offset: rgb(248, 250, 252);
+  --theme-scrollbar-thumb: #94a3b8;
+  --theme-scrollbar-thumb-hover: #64748b;
+}
+
+/* Dark theme (system preference) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --theme-page-bg: linear-gradient(to bottom right, #000, rgb(2 6 23), rgb(29 78 216));
+    --theme-surface: rgba(30, 41, 59, 0.95);
+    --theme-surface-solid: rgb(30, 41, 59);
+    --theme-input-bg: rgb(51, 65, 85);
+    --theme-border: rgb(71, 85, 105);
+    --theme-border-muted: rgba(51, 65, 85, 0.5);
+    --theme-text: #fff;
+    --theme-text-muted: rgb(148, 163, 184);
+    --theme-accent-from: #60a5fa;
+    --theme-accent-to: #22d3ee;
+    --theme-accent-shadow: rgba(59, 130, 246, 0.5);
+    --theme-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    --theme-ring-offset: rgb(30, 41, 59);
+    --theme-scrollbar-thumb: #475569;
+    --theme-scrollbar-thumb-hover: #64748b;
+  }
+}
+
+@layer components {
+  /* Page background */
+  .theme-page-bg {
+    background: var(--theme-page-bg);
+  }
+  /* Card/panel */
+  .theme-card {
+    background: var(--theme-surface);
+    border: 1px solid var(--theme-border-muted);
+    border-radius: 1rem;
+    box-shadow: var(--theme-card-shadow);
+  }
+  /* Input field */
+  .theme-input {
+    @apply w-full px-3.5 py-2.5 rounded-lg focus:outline-none focus:ring-2 transition-shadow;
+    background: var(--theme-input-bg);
+    border: 1px solid var(--theme-border);
+    color: var(--theme-text);
+  }
+  .theme-input::placeholder {
+    color: var(--theme-text-muted);
+  }
+  .theme-input:focus {
+    --tw-ring-color: var(--theme-accent-from);
+    border-color: var(--theme-accent-from);
+  }
+  /* Primary button (gradient) */
+  .btn-primary-theme {
+    @apply inline-flex justify-center items-center gap-2 py-2.5 px-4 text-sm font-semibold rounded-lg text-white focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all;
+    background: linear-gradient(to right, var(--theme-accent-from), var(--theme-accent-to));
+    box-shadow: 0 10px 15px -3px var(--theme-accent-shadow);
+  }
+  .btn-primary-theme:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+  .btn-primary-theme:focus {
+    --tw-ring-offset-color: var(--theme-ring-offset);
+    --tw-ring-color: var(--theme-accent-from);
+  }
+  /* Secondary/outline button */
+  .btn-secondary-theme {
+    @apply inline-flex justify-center items-center gap-2 py-2.5 px-4 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 transition-colors;
+    background: transparent;
+    border: 1px solid var(--theme-border);
+    color: var(--theme-text);
+  }
+  .btn-secondary-theme:hover {
+    background: var(--theme-input-bg);
+  }
+  .btn-secondary-theme:focus {
+    --tw-ring-color: var(--theme-border);
+  }
+  /* Label text */
+  .theme-label {
+    @apply block text-sm font-medium;
+    color: var(--theme-text-muted);
+  }
+  /* Muted / secondary text */
+  .theme-muted {
+    color: var(--theme-text-muted);
+  }
+  /* Text on main theme background */
+  .text-on-dark {
+    color: var(--theme-text);
+  }
+  .text-on-dark-muted {
+    color: var(--theme-text-muted);
+  }
+  /* Text on light background (use inside bg-white / bg-gray-50 etc.) */
+  .text-on-light {
+    @apply text-gray-900;
+  }
+  .text-on-light-muted {
+    @apply text-gray-600;
+  }
+}
+
+/* Global contrast: light backgrounds inside main content get dark text */
+main .bg-white {
+  color: #111827;
+}
+main .bg-gray-50,
+main [class*="bg-gray-50"] {
+  color: #111827;
+}
+main .bg-slate-50,
+main [class*="bg-slate-50"] {
+  color: #0f172a;
+}
+
+.text-xxs {
+  font-size: 0.625rem; /* 10px if root is 16px */
+  line-height: 1rem; /* Optional: set to 16px for readability */
+}
+
+.document-preview-content ul,
+.document-preview-content ol {
+  padding-left: 2em;
+  margin: 0.5em 0;
+  list-style: initial !important;
+}
+.document-preview-content li {
+  margin: 0.2em 0;
+}
+
+/* Hide scrollbar but still scrollable */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Global thin scrollbar styles — follow system theme */
+* {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--theme-scrollbar-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--theme-scrollbar-thumb);
+  border-radius: 2px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--theme-scrollbar-thumb-hover);
+}
+
+/* Ensure scrollbar-hide still works - override global styles */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none !important;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+  scrollbar-color: transparent transparent !important; /* Firefox */
+}
+
+@keyframes bubble-bump {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  /* Ensure tables scroll horizontally on mobile */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent text overflow on mobile */
+  .truncate-mobile {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* Touch-friendly tap targets on mobile */
+@media (max-width: 768px) {
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Improve scrolling on mobile */
+@media (max-width: 768px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Freedom Wall — masonry columns (layout only; theme unchanged) */
+.freedom-wall-masonry {
+  display: flex;
+  width: 100%;
+  margin-left: -0.875rem;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+.freedom-wall-masonry_column {
+  padding-left: 0.875rem;
+  background-clip: padding-box;
+  min-width: 0; /* flex children shrink so no horizontal overflow */
+}
+.freedom-wall-masonry_column > article {
+  margin-bottom: 0.875rem;
+  max-width: 100%;
+  box-sizing: border-box;
+  transition: box-shadow 0.35s ease, border-color 0.35s ease, transform 0.25s ease;
+}
+.freedom-wall-masonry_column > article:hover {
+  box-shadow: 0 12px 40px -12px rgb(0 0 0 / 0.45);
+}
+
+/* Smooth media reveal (Freedom Wall + composer previews) */
+.fw-smooth-media {
+  position: relative;
+  background: linear-gradient(145deg, rgb(15 23 42 / 0.9), rgb(30 41 59 / 0.85));
+}
+.fw-smooth-media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgb(51 65 85 / 0.15) 0%,
+    rgb(71 85 105 / 0.25) 50%,
+    rgb(51 65 85 / 0.15) 100%
+  );
+  background-size: 200% 100%;
+  animation: fw-shimmer 1.4s ease-in-out infinite;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+.fw-smooth-media.fw-smooth-media--ready::before {
+  opacity: 0;
+  animation: none;
+}
+@keyframes fw-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+.fw-smooth-media img,
+.fw-smooth-media video {
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.fw-smooth-media.fw-smooth-media--ready img,
+.fw-smooth-media.fw-smooth-media--ready video {
+  opacity: 1;
+  transform: scale(1);
+}
+.fw-smooth-media:not(.fw-smooth-media--ready) img,
+.fw-smooth-media:not(.fw-smooth-media--ready) video {
+  opacity: 0;
+  transform: scale(1.03);
+}
+/* Single column: no negative gutter — avoids mobile horizontal scroll */
+@media (max-width: 639px) {
+  .freedom-wall-masonry {
+    margin-left: 0;
+    flex-direction: column;
+  }
+  .freedom-wall-masonry_column {
+    padding-left: 0;
+    width: 100% !important;
+  }
+}
+
+/* Freedom Wall — focus post from notification */
+@keyframes freedom-wall-post-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 211, 238, 0.12);
+  }
+}
+.freedom-wall-post-highlight {
+  animation: freedom-wall-post-pulse 1.2s ease-in-out 2;
+  outline: 2px solid rgb(34 211 238 / 0.85);
+  outline-offset: 2px;
+  border-color: rgb(34 211 238 / 0.6) !important;
+  z-index: 1;
+  position: relative;
+}
