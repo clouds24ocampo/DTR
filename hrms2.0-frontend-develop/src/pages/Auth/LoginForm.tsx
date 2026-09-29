@@ -1,4 +1,4 @@
-import { Eye, EyeOff, LogIn, AlertCircle, ChevronRight, ArrowRight, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, LogIn, AlertCircle, ChevronRight, ArrowRight } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import useAuthStore from "../../stores/auth/auth.store";
@@ -573,14 +573,6 @@ export default function LoginForm() {
           >
             Virtual Office
           </button>
-          <button
-            type="button"
-            onClick={() => navigate("/register-admin")}
-            className="w-full flex justify-center items-center gap-2 py-2 px-4 text-xs font-semibold rounded-lg text-cyan-300 bg-blue-950/70 border border-blue-500/50 hover:bg-blue-900/60 hover:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all shadow-md"
-          >
-            <ShieldCheck className="w-4 h-4 text-cyan-400" />
-            Register Super Admin
-          </button>
         </form>
       </div>
     </motion.div>
@@ -871,17 +863,6 @@ export default function LoginForm() {
                 className="w-full flex justify-center items-center gap-2 py-2.5 px-4 text-sm font-medium rounded-lg text-white bg-transparent border border-slate-600 hover:bg-slate-700/50 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors"
               >
                 Virtual Office
-              </button>
-            </motion.div>
-            {/* Register Super Admin */}
-            <motion.div variants={itemVariants}>
-              <button
-                type="button"
-                onClick={() => navigate("/register-admin")}
-                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 text-xs font-semibold rounded-lg text-cyan-300 bg-blue-950/70 border border-blue-500/50 hover:bg-blue-900/60 hover:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all shadow-md"
-              >
-                <ShieldCheck className="w-4 h-4 text-cyan-400" />
-                Register Super Admin
               </button>
             </motion.div>
           </motion.form>
