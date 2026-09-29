@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { DataProvider } from "./contexts/DataContext";
 import LoginForm from "./pages/Auth/LoginForm";
+import RegisterAdmin from "./pages/Auth/RegisterAdmin";
 import PublicClock from "./pages/Public/PublicClock";
 import VirtualOffice from "./pages/Public/VirtualOffice";
 import ComingSoon from "./pages/Public/ComingSoon";
@@ -217,6 +218,14 @@ function App() {
         {
           path: "/login",
           element: <LoginForm />,
+        },
+        {
+          path: "/register-admin",
+          element: <RegisterAdmin />,
+        },
+        {
+          path: "/register-super-admin",
+          element: <RegisterAdmin />,
         },
         {
           path: "/clock",

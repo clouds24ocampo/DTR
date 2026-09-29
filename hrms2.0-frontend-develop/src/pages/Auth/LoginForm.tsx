@@ -6,7 +6,6 @@ import LoadingIndicator from "../../components/common/login/LoadingIndicator";
 import { motion } from "framer-motion";
 import SplashScreen from "../../components/common/login/SplashScreen";
 import ForgotPasswordModal from "../../components/common/login/ForgotPasswordModal";
-import RegisterAdminModal from "../../components/common/login/RegisterAdminModal";
 
 const MOBILE_BREAKPOINT_PX = 768;
 const APP_DISPLAY_NAME = "QUANTUM CLOUD CORPORATION"; // Onboarding headline app name
@@ -163,7 +162,6 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [showRegisterAdmin, setShowRegisterAdmin] = useState(false);
   const [statusNote, setStatusNote] = useState<string | null>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [carouselReady, setCarouselReady] = useState(false);
@@ -577,7 +575,7 @@ export default function LoginForm() {
           </button>
           <button
             type="button"
-            onClick={() => setShowRegisterAdmin(true)}
+            onClick={() => navigate("/register-admin")}
             className="w-full flex justify-center items-center gap-2 py-2 px-4 text-xs font-semibold rounded-lg text-cyan-300 bg-blue-950/70 border border-blue-500/50 hover:bg-blue-900/60 hover:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all shadow-md"
           >
             <ShieldCheck className="w-4 h-4 text-cyan-400" />
@@ -879,7 +877,7 @@ export default function LoginForm() {
             <motion.div variants={itemVariants}>
               <button
                 type="button"
-                onClick={() => setShowRegisterAdmin(true)}
+                onClick={() => navigate("/register-admin")}
                 className="w-full flex justify-center items-center gap-2 py-2.5 px-4 text-xs font-semibold rounded-lg text-cyan-300 bg-blue-950/70 border border-blue-500/50 hover:bg-blue-900/60 hover:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 transition-all shadow-md"
               >
                 <ShieldCheck className="w-4 h-4 text-cyan-400" />
@@ -893,10 +891,6 @@ export default function LoginForm() {
       <ForgotPasswordModal
         open={showForgotPassword}
         onClose={() => setShowForgotPassword(false)}
-      />
-      <RegisterAdminModal
-        isOpen={showRegisterAdmin}
-        onClose={() => setShowRegisterAdmin(false)}
       />
     </div>
   );
