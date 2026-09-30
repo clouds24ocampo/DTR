@@ -6,13 +6,13 @@
   "scripts": {
     "predev": "node scripts/free-ports.js",
     "dev": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "npm --prefix hrms2.0-backend-develop run dev",
-    "dev:frontend": "npm --prefix hrms2.0-frontend-develop run dev",
-    "build": "npm --prefix hrms2.0-backend-develop run build && npm --prefix hrms2.0-frontend-develop run build",
-    "build:release": "npm --prefix hrms2.0-backend-develop run build:release && npm --prefix hrms2.0-frontend-develop run build:release",
-    "build:backend": "npm --prefix hrms2.0-backend-develop run build",
-    "build:frontend": "npm --prefix hrms2.0-frontend-develop run build",
-    "test": "npm --prefix hrms2.0-backend-develop run test",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "build:release": "npm --prefix backend run build:release && npm --prefix frontend run build:release",
+    "build:backend": "npm --prefix backend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "test": "npm --prefix backend run test",
     "seed:admin": "node scripts/create-admin.js"
   },
   "devDependencies": {

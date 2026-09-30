@@ -1,5 +1,5 @@
 const path = require('path');
-const backendNodeModules = path.resolve(__dirname, '../hrms2.0-backend-develop/node_modules');
+const backendNodeModules = path.resolve(__dirname, '../backend/node_modules');
 
 let mongoose, bcrypt;
 try {
