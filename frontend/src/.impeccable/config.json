@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          "frontend/src/pages/Dashboard/HrDashboard.tsx"
+        ],
+        "createdAt": "2026-09-30T06:03:12.031Z",
+        "reason": "agent triage: quick-action chip is slate-700 on white; hover swaps both bg-blue-50 and text-blue-700 together, so gray text never sits on the tint"
+      }
+    ]
+  }
+}

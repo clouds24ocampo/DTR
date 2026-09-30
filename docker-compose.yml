@@ -1,0 +1,74 @@
+# HRMS 2.0 — local Mongo + backend + frontend (nginx).
+# Usage:
+#   1. cp .env.docker.example .env.docker   (compose reads this file)
+#   2. Fill frontend/.env.production (VITE_API_URL=https://your-domain.com/)
+#   3. docker compose --env-file .env.docker up -d --build
+#   4. Seed: docker compose --env-file .env.docker --profile seed run --rm seed
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    # NOT published to the host: only the backend container can reach it.
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  backend:
+    build:
+      context: ./backend
+      target: runtime
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "9001"
+      MONGO_DB_URI: ${MONGO_DB_URI:-mongodb://mongo:27017/hrms}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env.docker}
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS in .env.docker}
+      WEBSITE: ${WEBSITE:-}
+      UPLOAD_DIR: ${UPLOAD_DIR:-}
+      COMPANY_LOGO: ${COMPANY_LOGO:-}
+      COMPANY_NAME: ${COMPANY_NAME:-HRMS}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      FILE_UPLOADER_URL: ${FILE_UPLOADER_URL:-}
+    volumes:
+      - uploads:/app/build/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    # Bound to localhost: the host nginx (SSL) proxies to this.
+    ports:
+      - "127.0.0.1:8080:80"
+
+  # One-off seeder. Creates admin/IT/schedules in the LOCAL mongo.
+  # Run: docker compose --env-file .env.docker --profile seed run --rm seed
+  seed:
+    build:
+      context: ./backend
+      target: builder
+    profiles: ["seed"]
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGO_DB_URI: ${MONGO_DB_URI:-mongodb://mongo:27017/hrms}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@quantumcloud.com}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?Set SEED_ADMIN_PASSWORD in .env.docker}
+    command: ["npx", "tsx", "src/seed/seed.ts"]
+
+volumes:
+  mongo-data:
+  uploads:

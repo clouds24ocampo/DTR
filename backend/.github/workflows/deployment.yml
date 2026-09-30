@@ -1,0 +1,86 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+permissions:
+  contents: read # Allows reading the repository contents
+  issues: write # Grants permission to create GitHub issues
+
+jobs:
+  deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      # Cache node_modules
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+          key: Linux-build-cache-node-modules-${{ hashFiles('**/package-lock.json') }}-${{ github.run_id }}
+          restore-keys: |
+            Linux-build-cache-node-modules-${{ runner.os }}-
+            Linux-build-${{ runner.os }}-
+            Linux-
+
+      - name: deploy app
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: "${{ secrets.VPS_SSH_KEY }}"
+          script: |
+
+
+            # Directly assign the branch from the GitHub context
+            BRANCH="${{ github.ref_name }}"
+            # Also inject the full ref if needed
+            GITHUB_REF="${{ github.ref }}"
+            # Fallback using parameter expansion if BRANCH is empty
+            BRANCH="${BRANCH:-${GITHUB_REF##*/}}"
+            echo "Current branch is: $BRANCH"
+
+            if [ "$BRANCH" = "main" ]; then
+              cd ~/dev/wesman/backend || { echo "❌ Directory not found"; exit 1; }
+              git pull --rebase origin main || { echo "❌ Git pull failed"; exit 1; }
+              rm -rf node_modules build || { echo "❌ Failed to remove node_modules and build"; exit 1; }
+              npm ci || { echo "❌ npm ci failed"; exit 1; }
+              npm run build:release  || { echo "❌ Turbo Build failed"; exit 1; }
+              cp -r build/release/* build/release/.[!.]* /var/www/wesman/backend || { echo "❌ Copying build files failed"; exit 1; }
+              cp ecosystem.config.js /var/www/wesman/backend|| { echo "❌ Copying ecosystem.config.js for pm2 failed"; exit 1; }
+              pm2 startOrRestart ecosystem.config.js --only wesman || { echo "❌ Failed to restart pm2 wesman"; exit 1; }
+            elif [ "$BRANCH" = "develop" ]; then
+              cd ~/dev/wesman/backend || { echo "❌ Directory not found"; exit 1; }
+              git checkout develop || { echo "❌ Git checkout to develop failed"; exit 1; }
+              git pull --rebase origin develop || { echo "❌ Git pull failed"; exit 1; }
+              rm -rf node_modules build || { echo "❌ Failed to remove node_modules and build"; exit 1; }
+              npm ci || { echo "❌ npm ci failed"; exit 1; }
+              npm run build:debug  || { echo "❌ Turbo Build failed"; exit 1; }
+              cp -r build/debug/* build/debug/.[!.]* /var/www/wesman-staging/backend || { echo "❌ Copying build files failed"; exit 1; }
+              cp ecosystem.config.js /var/www/wesman-staging/backend || { echo "❌ Copying ecosystem.config.js for pm2 failed"; exit 1; }
+              pm2 startOrRestart ecosystem.config.js --only wesman-staging  || { echo "❌ Failed to restart pm2 wesman"; exit 1; }
+            else
+              echo "Unsupported branch: $BRANCH" && exit 1
+            fi
+      - name: Create GitHub Issue to Merge to Production
+        if: github.ref_name == 'develop' && success()
+        uses: dacbd/create-issue-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "🚀 Pending Production Merge"
+          body: |
+            A successful deployment was made to STAGING from the `develop` branch.
+
+            Please review the changes and [create a pull request](https://github.com/${{ github.repository }}/compare/main...develop?expand=1) to merge `develop` into `main` for production deployment.
+
+            - ✅ Deployment Commit: `${{ github.sha }}`
+            - 👤 Triggered by: `${{ github.actor }}`
+            - 📅 Time: `${{ github.event.head_commit.timestamp }}`
+
+            _This issue was automatically generated after successful staging deployment._
+          labels: "deployment,review,production"
