@@ -34,10 +34,15 @@ interface PayrollMetricsProps {
 }
 
 export default function PayrollMetrics({ payrolls }: PayrollMetricsProps) {
-    const totalPayroll = payrolls.reduce((sum, p) => sum + p.netPay, 0);
-    const totalEmployees = new Set(payrolls.map(p => typeof p.employee === 'string' ? p.employee : p.employee._id)).size;
-    const pendingCount = payrolls.filter(p => p.status === 'draft').length;
-    const paidCount = payrolls.filter(p => p.status === 'paid').length;
+    const safePayrolls = Array.isArray(payrolls) ? payrolls.filter(Boolean) : [];
+    const totalPayroll = safePayrolls.reduce((sum, p) => sum + (p.netPay || 0), 0);
+    const totalEmployees = new Set(
+        safePayrolls
+            .map((p) => (typeof p.employee === 'string' ? p.employee : p.employee?._id))
+            .filter(Boolean)
+    ).size;
+    const pendingCount = safePayrolls.filter((p) => p.status === 'draft').length;
+    const paidCount = safePayrolls.filter((p) => p.status === 'paid').length;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
