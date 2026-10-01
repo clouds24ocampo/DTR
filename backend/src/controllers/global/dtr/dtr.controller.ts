@@ -164,8 +164,19 @@ export const endDTRItem = async (req: Request, res: Response) => {
 /*                                     READ                                   */
 /* -------------------------------------------------------------------------- */
 
-export const getAllDTRs = async (_req: Request, res: Response) => {
+type AccountReq = Request & { account?: { _id?: unknown; position?: unknown } };
+
+/** Roles that manage attendance (DTR Tracking, exports, dashboards). */
+const managesAttendance = (req: Request): boolean =>
+  [(req as AccountReq).account?.position]
+    .flat()
+    .map((p) => String(p ?? "").toLowerCase())
+    .some((p) => /^(hr|workforce|operation manager|operations manager)$|team leader/.test(p));
+
+export const getAllDTRs = async (req: Request, res: Response) => {
   try {
+    if (!managesAttendance(req))
+      return res.status(403).json({ message: "Not allowed." });
     const dtrs = await getAllDTRsService();
     return res
       .status(200)
@@ -186,10 +197,7 @@ export const getDTRsByUserId = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "User ID is required" });
 
     // Own records, or a role that manages attendance (DTR Tracking, exports).
-    const account = (req as Request & { account?: { _id?: unknown; position?: unknown } }).account;
-    const held = [account?.position].flat().map((p) => String(p ?? "").toLowerCase());
-    const manages = held.some((p) => /^(hr|workforce|operation manager|operations manager)$|team leader/.test(p));
-    if (String(account?._id) !== userId && !manages)
+    if (String((req as AccountReq).account?._id) !== userId && !managesAttendance(req))
       return res.status(403).json({ message: "You can only view your own DTR." });
 
     const dtrs = await getDTRsByUserIdService(userId);
@@ -211,6 +219,8 @@ export const getDTRsByDate = async (req: Request, res: Response) => {
   try {
     const { date } = req.params as { date?: string };
     if (!date) return res.status(400).json({ message: "Date is required" });
+    if (!managesAttendance(req))
+      return res.status(403).json({ message: "Not allowed." });
 
     const dtrs = await getDTRsByDateService(date);
     return res
