@@ -23,6 +23,7 @@ on:
       - "**.md"
       - "docs/**"
       - "deploy/**"
+  workflow_dispatch:
 
 jobs:
   deploy:
