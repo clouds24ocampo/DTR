@@ -33,7 +33,6 @@ import type { DeclinedActionType } from "../../types/global/declined-entry/decli
 import type { UserType } from "../../types/workforce/user/user.type";
 import { verifyDevice } from "../../api/workplace/device/device.api";
 import { ClockFace, StepLabel, TodayActivity, type Tone } from "./clockUi";
-import axiosInstance from "../../axios/axiosInstance";
 import {
   shouldNotifyForBreak,
   getNextNotificationDelay,
@@ -66,31 +65,6 @@ type ActionId =
   | "system-issue"
   | "on-trip"
   | "timeout";
-
-const ACTION_TO_OFFICE_ZONE: Partial<Record<ActionId, string>> = {
-  work: "work-area",
-  break: "cafeteria",
-  meal: "cafeteria",
-  "bio-break": "restroom",
-  "clinic-break": "clinic",
-  "on-trip": "outside",
-  timeout: "outside",
-};
-
-async function syncVirtualOfficeAction(employeeId: string, actionId: ActionId): Promise<void> {
-  const destinationZone = ACTION_TO_OFFICE_ZONE[actionId];
-  if (!destinationZone) return;
-  try {
-    await axiosInstance.post("/employee/action", {
-      employeeId,
-      action: actionId,
-      destinationZone,
-    });
-  } catch (error) {
-    // Non-blocking sync for office visualization only.
-    console.warn("Virtual Office sync skipped:", error);
-  }
-}
 
 const ACTIONS: {
   id: ActionId;
@@ -987,7 +961,6 @@ export default function PublicClock() {
           _hp_check: true
         } as any);
         if (!ended) return;
-        await syncVirtualOfficeAction(userIdToUse, "timeout");
         setSuccessMessage("Time out recorded.");
         // Refresh DTR status after timeout to update isTimeIn
         if (foundUserId) {
@@ -1069,7 +1042,6 @@ export default function PublicClock() {
         halfDayType: type === "on trip" && tripCategory === "Half day" ? (halfDayType as "First session" | "Second session") : undefined,
       } as any);
       if (!started) return;
-      await syncVirtualOfficeAction(userIdToUse, selectedAction as ActionId);
       setSuccessMessage(
         `Clocked in for ${ACTIONS.find((a) => a.id === selectedAction)?.label ?? "action"
         }`
@@ -1119,7 +1091,6 @@ export default function PublicClock() {
       });
 
       if (success) {
-        await syncVirtualOfficeAction(foundUserId, "work");
         setSuccessMessage("Trip converted to regular work time.");
         // Refresh local DTR state
         try {
