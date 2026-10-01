@@ -34,9 +34,7 @@ export interface EditEmployeeRegistrationInput {
 
 export const fetchEmployees = async () => {
   try {
-    console.log("Fetched employees");
     const response = await axiosInstance.get("api/users/");
-    console.log("Fetched employees:", response.data);
     return response;
   } catch (error: unknown) {
     if (error instanceof AxiosError) {

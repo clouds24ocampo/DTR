@@ -7,6 +7,7 @@ import type { ISession } from "src/types/global/schedule/schedule.type";
 import { ServiceError } from "src/utils/global/error";
 import { getUserFromCookie } from "src/utils/global/getCookie";
 import UserModel from "../../../models/workforce/user.model";
+import { DEFAULT_FLEX_SESSION, isFlexibleTimePosition } from "src/config/work-policy";
 
 /**
  * Helper function to convert idNumber to MongoDB _id
@@ -147,11 +148,12 @@ export const getSchedulesByUserAndDate = async (
   res: Response
 ) => {
   try {
-    const { userId, date, startDate, endDate } = req.body as {
+    const { userId, date, startDate, endDate, kiosk } = req.body as {
       userId?: string;
       date?: string;
       startDate?: string;
       endDate?: string;
+      kiosk?: boolean; // clock page: preview the default shift for flexible-time staff
     };
 
     if (!userId)
@@ -179,8 +181,31 @@ export const getSchedulesByUserAndDate = async (
     console.log(`[getSchedulesByUserAndDate] Request - userId: "${userId}", date: "${date}"`);
     console.log(`[getSchedulesByUserAndDate] Resolved userId: "${resolvedUserId}"`);
 
-    const schedules = await getSchedulesByUserAndDateService(resolvedUserId, date);
-    console.log(`[getSchedulesByUserAndDate] Found ${schedules.length} schedule(s) for userId: "${resolvedUserId}", date: "${date}"`);
+    const found = await getSchedulesByUserAndDateService(resolvedUserId, date);
+    console.log(`[getSchedulesByUserAndDate] Found ${found.length} schedule(s) for userId: "${resolvedUserId}", date: "${date}"`);
+
+    // Tell the client whether this user is flexible-time (developers/IT).
+    // Kiosk callers also get the fields the clock card shows (no salary/email).
+    const user = await UserModel.findById(resolvedUserId)
+      .select(
+        kiosk
+          ? "firstName middleName lastName idNumber position profilePicture archived location workInfo"
+          : "position"
+      )
+      .lean();
+    const flexible = isFlexibleTimePosition((user as { position?: unknown } | null)?.position);
+    const extra = kiosk ? { flexible, employee: user } : { flexible };
+    const schedules: unknown[] = found.map((s) => ({ ...(s as any).toObject(), ...extra }));
+    if (flexible && kiosk && schedules.length === 0) {
+      // Not persisted: the first clock-in creates the real shift (ensureScheduleForUser).
+      schedules.push({
+        userId: resolvedUserId,
+        date,
+        teamName: "Flexible",
+        sessions: [{ ...DEFAULT_FLEX_SESSION }],
+        ...extra,
+      });
+    }
 
     return res
       .status(200)

@@ -123,28 +123,30 @@ async function getEmployeeName(userId: string): Promise<string> {
 
 /**
  * Load the user's schedule for a date, auto-provisioning a default shift
- * for flexible-time positions (e.g. Software Engineer) on first clock-in.
+ * for flexible-time positions (developers, IT) on first clock-in.
  * Everyone else still requires an HR-assigned schedule (404).
  */
 async function ensureScheduleForUser(
   userId: string,
   targetDate: string
 ): Promise<{ scheduleDoc: ScheduleDocLite; flexible: boolean }> {
+  const user = (await User.findById(userId)
+    .select("position archived")
+    .lean()) as { position?: unknown; archived?: boolean } | null;
+  // Enforced here (not just in the UI): the public clock can't load the employee list.
+  if (user?.archived) {
+    throw new ServiceError(
+      "Your account is inactive. Please contact the HR department.",
+      403
+    );
+  }
+  const flexible = isFlexibleTimePosition(user?.position);
+
   const existing = await Schedule.findOne({ userId, date: targetDate });
   if (existing) {
-    const user = await User.findById(userId).select("position").lean();
-    return {
-      scheduleDoc: existing as unknown as ScheduleDocLite,
-      flexible: isFlexibleTimePosition(
-        (user as { position?: unknown } | null)?.position
-      ),
-    };
+    return { scheduleDoc: existing as unknown as ScheduleDocLite, flexible };
   }
 
-  const user = await User.findById(userId).select("position").lean();
-  const flexible = isFlexibleTimePosition(
-    (user as { position?: unknown } | null)?.position
-  );
   if (!flexible) {
     throw new ServiceError(
       "Schedule not found for this user on the given date.",
@@ -710,6 +712,12 @@ export async function autoEndDTRItemService(input: {
 
   let autoEndedCount = 0;
 
+  // ponytail: flexible staff (developers/IT) only get a fixed 23:45 end-of-day close
+  // so a forgotten time-out never rolls past midnight; per-user caps if HR wants overtime limits.
+  const owner = (await User.findById(userId).select("position").lean()) as
+    | { position?: unknown }
+    | null;
+  const flexible = isFlexibleTimePosition(owner?.position);
 
   for (let i = 0; i < dtr.sessions.length; i++) {
     const session = dtr.sessions[i];
@@ -721,7 +729,7 @@ export async function autoEndDTRItemService(input: {
       continue;
     }
 
-    const schedEndMin = hhmmToMin(session.scheduledEndTime);
+    const schedEndMin = flexible ? hhmmToMin("23:30") : hhmmToMin(session.scheduledEndTime);
 
     console.log(
       `[CRON DEBUG] user=${userId}, session=${i}, schedEnd=${session.scheduledEndTime} (${schedEndMin}), current=${currentTime} (${currentMin})`

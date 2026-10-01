@@ -53,6 +53,7 @@ export type GetSchedulesByUserAndDateBodyInput = {
   date?: string; // "YYYY-MM-DD" (single day)
   startDate?: string; // "YYYY-MM-DD" (range start)
   endDate?: string; // "YYYY-MM-DD" (range end)
+  kiosk?: boolean; // clock page only: backend previews the default shift for flexible-time staff
 };
 
 /** Body for PUT /edit — bulk replace sessions of one schedule */

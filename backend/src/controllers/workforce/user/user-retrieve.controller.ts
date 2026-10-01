@@ -2,30 +2,21 @@ import { Request, Response } from "express";
 import UserModel from "../../../models/workforce/user.model";
 import { getUserFromCookie } from "../../../utils/global/getCookie";
 import { ServiceError } from "../../../utils/global/error";
-import bcrypt from "bcryptjs";
+
+const PAY_VIEWERS = ["hr", "workforce", "operations manager"];
 
 export const getAllEmployees = async (
-  req: Request,
+  req: Request & { account?: { position?: unknown } },
   res: Response
 ): Promise<void> => {
   try {
     //getUserFromCookie(req);
-    const employees = await UserModel.find();
-
-    for (const employee of employees) {
-      const originalPassword = "password";
-
-      const isPasswordCorrect = await bcrypt.compare(
-        originalPassword,
-        employee.password
-      );
-
-      employee.password = originalPassword;
-    }
-
-    employees.forEach((employee) => {
-      delete employee.password;
-    });
+    // Never send password hashes; salary only to roles that manage pay.
+    const held = [req.account?.position].flat().map((p) => String(p ?? "").toLowerCase());
+    const canSeePay = held.some((p) => PAY_VIEWERS.includes(p));
+    const employees = await UserModel.find().select(
+      canSeePay ? "-password" : "-password -salary -salaryType"
+    );
 
     res.status(200).json(employees);
   } catch (error) {

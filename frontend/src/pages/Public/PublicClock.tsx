@@ -29,9 +29,7 @@ import {
 } from "../../utils/geo/geoFence.utils";
 import { createDeclinedEntry } from "../../api/global/declined-entry/declined-entry.api";
 import type { DeclinedActionType } from "../../types/global/declined-entry/declined-entry.type";
-import { fetchEmployees } from "../../api/hr/employee.api";
 import type { UserType } from "../../types/workforce/user/user.type";
-import { isFlexibleTimePosition } from "../../config/workPolicy";
 import { verifyDevice } from "../../api/workplace/device/device.api";
 import axiosInstance from "../../axios/axiosInstance";
 import {
@@ -274,7 +272,6 @@ export default function PublicClock() {
   const [checkingLocation, setCheckingLocation] = useState(false);
   const [geoFenceActionLabel, setGeoFenceActionLabel] = useState<string>("");
   const [employeeInfo, setEmployeeInfo] = useState<UserType | null>(null);
-  const [loadingEmployeeInfo, setLoadingEmployeeInfo] = useState(false);
   const [tripType, setTripType] = useState("");
   const [tripReason, setTripReason] = useState("");
   const [tripCategory, setTripCategory] = useState<"Whole day" | "Half day" | "">("");
@@ -350,6 +347,7 @@ export default function PublicClock() {
         const userSchedules = await fetchSchedulesFiltered({
           userId: trimmedId, // Can be idNumber or userId
           date: ymd,
+          kiosk: true, // backend previews the default shift for flexible-time staff
         }).catch((error) => {
           // Handle 401 errors gracefully - endpoint might require auth
           if (error?.response?.status === 401) {
@@ -362,7 +360,8 @@ export default function PublicClock() {
 
         const hasSched = userSchedules && userSchedules.length > 0;
         setHasSchedule(hasSched);
-        setIsFlexTime(false);
+        // Backend flags developers/IT staff as flexible time (no time-in window).
+        setIsFlexTime(Boolean(hasSched && (userSchedules[0] as any).flexible));
 
         // If schedule found, extract userId and check DTR
         if (hasSched && userSchedules[0]?.userId) {
@@ -396,50 +395,12 @@ export default function PublicClock() {
             setCurrentDTR(null);
           }
 
-          // Fetch employee information
-          setLoadingEmployeeInfo(true);
-          try {
-            const employeesResponse = await fetchEmployees();
-            if (employeesResponse?.data) {
-              const employee = employeesResponse.data.find(
-                (emp: UserType) => emp._id === userId || emp.idNumber === trimmedId
-              );
-              if (employee) {
-                setEmployeeInfo(employee);
-              } else {
-                setEmployeeInfo(null);
-              }
-            }
-          } catch (empError) {
-            console.error("Error fetching employee info:", empError);
-            setEmployeeInfo(null);
-          } finally {
-            setLoadingEmployeeInfo(false);
-          }
+          // Employee card comes with the kiosk schedule lookup (works logged out).
+          setEmployeeInfo((schedule as any).employee ?? null);
         } else {
-          // No schedule today: flexible-time positions (e.g. Software Engineer)
-          // may still clock in — the backend provisions a default shift.
           setUserSchedule(null);
-          try {
-            const employeesResponse = await fetchEmployees();
-            const employee = employeesResponse?.data?.find(
-              (emp: UserType) =>
-                (emp.idNumber || "").toLowerCase() === trimmedId.toLowerCase()
-            );
-            if (employee && isFlexibleTimePosition(employee.position)) {
-              setIsFlexTime(true);
-              setFoundUserId(employee._id);
-              setEmployeeInfo(employee);
-            } else {
-              setIsFlexTime(false);
-              setFoundUserId(null);
-              setCurrentDTR(null);
-            }
-          } catch {
-            setIsFlexTime(false);
-            setFoundUserId(null);
-            setCurrentDTR(null);
-          }
+          setFoundUserId(null);
+          setCurrentDTR(null);
         }
       } catch (error: any) {
         console.error("Error checking schedule/DTR:", error);
@@ -661,7 +622,8 @@ export default function PublicClock() {
 
   // Auto-timeout check: "System should timeout 15 minutes after the scheduled end time of the CURRENT active shift"
   useEffect(() => {
-    if (!foundUserId || !isTimeIn || !userSchedule || !currentDTR) return;
+    // Flexible-time staff have no shift end; the backend closes their DTR at 23:45.
+    if (isFlexTime || !foundUserId || !isTimeIn || !userSchedule || !currentDTR) return;
 
     // Check every minute
     const checkInterval = setInterval(() => {
@@ -729,6 +691,7 @@ export default function PublicClock() {
 
     return () => clearInterval(checkInterval);
   }, [
+    isFlexTime,
     foundUserId,
     isTimeIn,
     userSchedule,
@@ -1256,7 +1219,7 @@ export default function PublicClock() {
           console.warn("Could not refresh DTR status:", dtrError);
         }
         // Flexible-time first clock-in provisions the shift server-side — pull it in.
-        if (isFlexTime && !userSchedule) {
+        if (isFlexTime && !userSchedule?._id) {
           try {
             const refreshed = await fetchSchedulesFiltered({
               userId: foundUserId,
@@ -1531,7 +1494,7 @@ export default function PublicClock() {
                       </span>
                     ) : hasSchedule === true ? (
                       <span className="text-green-400 font-medium">
-                        ✓ Schedule found
+                        {isFlexTime ? "✓ Flexible time — clock in anytime" : "✓ Schedule found"}
                       </span>
                     ) : null}
                   </div>
@@ -1602,19 +1565,6 @@ export default function PublicClock() {
                           {!employeeInfo.archived ? "Active" : "Inactive"}
                         </span>
                       </div>
-                    </div>
-                  </motion.div>
-                )}
-                {idNumber.trim() && loadingEmployeeInfo && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="rounded-lg border border-slate-600 bg-slate-700/80 p-3 sm:p-4"
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-600 border-t-blue-400" />
-                      <span className="text-xs sm:text-sm text-slate-400">Loading employee information...</span>
                     </div>
                   </motion.div>
                 )}
