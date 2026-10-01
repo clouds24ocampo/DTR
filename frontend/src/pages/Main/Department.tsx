@@ -11,6 +11,7 @@ import EmptyState from "../../components/ui/EmptyState";
 import SkeletonGrid from "../../components/ui/SkeletonGrid";
 import { useDepartmentStore } from "../../stores/workforce/department/department.store";
 import { useUserStore } from "../../stores/workforce/user/user.store";
+import useAuthStore from "../../stores/auth/auth.store";
 import {
   normalizeDepartments,
   UserLite,
@@ -52,10 +53,17 @@ export default function Department() {
     fetchOtherUsers();
   }, []);
 
-  const { list: fullDepartments, safe: safeDepartments } = useMemo(
-    () => normalizeDepartments(departments),
-    [departments]
-  );
+  const { user } = useUserStore();
+  const { account } = useAuthStore();
+  const myId = String(user?._id ?? account?._id ?? "");
+
+  // Employees see their own department(s); org-wide editing lives under Management.
+  const { list: fullDepartments, safe: safeDepartments } = useMemo(() => {
+    const all = normalizeDepartments(departments);
+    const mine = (d: { head?: unknown; members?: unknown[] }) =>
+      String(d.head ?? "") === myId || (d.members ?? []).some((m) => String(m) === myId);
+    return { list: all.list.filter(mine), safe: all.safe.filter(mine) };
+  }, [departments, myId]);
 
   const userById = useMemo(() => {
     const m = new Map<string, UserLite>();
@@ -86,9 +94,9 @@ export default function Department() {
 
   const stats = [
     {
-      title: "Departments",
+      title: "My departments",
       value: totalDepartments,
-      subtitle: "All departments created",
+      subtitle: "You belong to",
       icon: Building2,
       color: "blue" as const,
     },
@@ -173,8 +181,8 @@ export default function Department() {
         <PageHeader
           icon={Building2}
           eyebrow="Organization"
-          title="Departments"
-          subtitle="View and explore organizational departments"
+          title="My Department"
+          subtitle="Your team, its head and the people you work with"
         />
       </motion.div>
 

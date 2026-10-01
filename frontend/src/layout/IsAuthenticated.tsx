@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import Header from "../components/global/Header";
 import Sidebar from "../components/global/Sidebar";
 import useAuthStore from "../stores/auth/auth.store";
+import { useUserStore } from "../stores/workforce/user/user.store";
 import SplashScreen from "../components/common/login/SplashScreen";
 
 const PAGE_TITLES: Record<string, string> = {
@@ -65,6 +66,17 @@ const IsAuthenticated = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, fetchMe } = useUserStore();
+  const accountId = account?._id;
+  const [syncedFor, setSyncedFor] = useState<string | null>(null);
+
+  // The user store is persisted per tab, so after switching accounts it can still hold the
+  // previous person. Reload "me" whenever it does not match the signed-in account.
+  useEffect(() => {
+    if (!accountId || user?._id === accountId) return;
+    useUserStore.setState({ user: null });
+    fetchMe().finally(() => setSyncedFor(accountId));
+  }, [accountId, user?._id, fetchMe]);
 
   const toggleSidebar = useCallback(() => setSidebarOpen((s) => !s), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -112,7 +124,8 @@ const IsAuthenticated = () => {
           className={`${activeTab === "messages" ? "" : "p-4 sm:p-6 md:p-8"
             } flex-1 overflow-auto min-h-0 text-slate-900`}
         >
-          <Outlet />
+          {/* Wait until "me" matches the account so no page renders someone else's data. */}
+          {user?._id === accountId || syncedFor === accountId ? <Outlet /> : null}
         </main>
       </div>
     </div>

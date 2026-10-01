@@ -27,7 +27,7 @@ export default function Schedule() {
   );
 
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toLocaleDateString("en-CA")
   );
 
   // Ensure the logged-in user is hydrated

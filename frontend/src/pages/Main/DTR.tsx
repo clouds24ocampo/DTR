@@ -53,7 +53,7 @@ export default function DTR() {
   const { ownDTR, loadMyDTRByDate, loading, userDTRs, loadUserDTRs } = useDTRStore();
 
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    format(new Date(), "yyyy-MM-dd")
   );
 
   const [now, setNow] = useState(new Date());
@@ -216,7 +216,7 @@ export default function DTR() {
   const goToNextDay = () => {
     const currentDate = new Date(selectedDate);
     currentDate.setDate(currentDate.getDate() + 1);
-    const today = new Date().toISOString().split("T")[0];
+    const today = format(new Date(), "yyyy-MM-dd");
     const nextDateStr = currentDate.toISOString().split("T")[0];
     if (nextDateStr <= today) {
       setSelectedDate(nextDateStr);
@@ -224,7 +224,7 @@ export default function DTR() {
   };
 
   const isNextDisabled = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = format(new Date(), "yyyy-MM-dd");
     return selectedDate >= today;
   }, [selectedDate]);
 
@@ -305,7 +305,7 @@ export default function DTR() {
                   <input
                     type="date"
                     value={selectedDate}
-                    max={new Date().toISOString().split("T")[0]}
+                    max={format(new Date(), "yyyy-MM-dd")}
                     onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
                     className="px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm bg-white"
                   />
