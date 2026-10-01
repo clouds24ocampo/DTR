@@ -20,6 +20,8 @@ import DTRExportModal from "../../../components/workforce/dtr/DTRExportModal";
 import PageHeader from "../../../components/ui/PageHeader";
 import EmptyState from "../../../components/ui/EmptyState";
 import TripApprovalsModal from "../../../components/workforce/dtr/TripApprovalsModal";
+import { connectSocket } from "../../../socket";
+import type { DTRDocLite } from "../../../types/global/dtr/dtr.type";
 
 /* --------------------- helper for YYYY-MM-DD (local) --------------------- */
 function getLocalDateString(date: Date): string {
@@ -158,13 +160,29 @@ export default function DTRTracking() {
     }
   }, [selectedEmployee, selectedDate, loadDTRsByUserAndDate]);
 
-  const selectedDateDTR = ownDTR ?? filteredDTRs[0] ?? null;
+  const selectedDateDTR = useMemo(() => {
+    if (!selectedEmployee) return null;
+    const match = filteredDTRs.find(
+      (d) => String(d.userId) === String(selectedEmployee) && d.date === selectedDate
+    );
+    if (match) return match;
+    const anyForEmp = filteredDTRs.find((d) => String(d.userId) === String(selectedEmployee));
+    if (anyForEmp) return anyForEmp;
+    if (filteredDTRs.length > 0 && String(filteredDTRs[0].userId) === String(selectedEmployee)) {
+      return filteredDTRs[0];
+    }
+    if (ownDTR && String(ownDTR.userId) === String(selectedEmployee) && ownDTR.date === selectedDate) {
+      return ownDTR;
+    }
+    return null;
+  }, [filteredDTRs, selectedEmployee, ownDTR, selectedDate]);
 
-  /* ------------------- Weekly Stats logic ------------------- */
+  /* ------------------- Weekly Stats & Real-Time Sync logic ------------------- */
   const [now, setNow] = useState(new Date());
 
+  // Ticking timer: 1 second interval for smooth real-time progress
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000);
+    const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -173,6 +191,41 @@ export default function DTRTracking() {
       loadUserDTRs(selectedEmployee);
     }
   }, [selectedEmployee, loadUserDTRs]);
+
+  // Real-time updates via Socket.IO
+  useEffect(() => {
+    if (!user?._id) return;
+    const socket = connectSocket(user._id);
+
+    const handleDTRUpdate = (payload: { dtr: DTRDocLite }) => {
+      if (!payload?.dtr) return;
+      if (String(payload.dtr.userId) === String(selectedEmployee)) {
+        const safeDate = selectedDate.split("T")[0];
+        loadDTRsByUserAndDate({ userId: selectedEmployee, date: safeDate });
+        loadUserDTRs(selectedEmployee);
+      }
+    };
+
+    socket.on("dtr:update", handleDTRUpdate);
+    return () => {
+      socket.off("dtr:update", handleDTRUpdate);
+      socket.disconnect();
+    };
+  }, [user?._id, selectedEmployee, selectedDate, loadDTRsByUserAndDate, loadUserDTRs]);
+
+  // Periodic quiet refresh if viewing today so active clock status is always current
+  useEffect(() => {
+    if (!selectedEmployee || !selectedDate) return;
+    const todayStr = getLocalDateString(new Date());
+    if (selectedDate.split("T")[0] !== todayStr) return;
+
+    const interval = setInterval(() => {
+      const safeDate = selectedDate.split("T")[0];
+      loadDTRsByUserAndDate({ userId: selectedEmployee, date: safeDate });
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [selectedEmployee, selectedDate, loadDTRsByUserAndDate]);
 
   const weekRange = useMemo(() => {
     const curr = new Date(selectedDate);
@@ -190,12 +243,31 @@ export default function DTRTracking() {
     };
   }, [selectedDate]);
 
-  const stats = useMemo<DTRStat[]>(() => {
+  // Merge selectedDateDTR with userDTRs so the weekly stats always include today's live active work
+  const weekDTRs = useMemo(() => {
     const startStr = getLocalDateString(weekRange.start);
     const endStr = getLocalDateString(weekRange.end);
+    const map = new Map<string, DTRDocLite>();
 
-    const weekDTRs = userDTRs.filter((d) => d.date >= startStr && d.date <= endStr);
+    (userDTRs || []).forEach((d) => {
+      if (d && d.date >= startStr && d.date <= endStr) {
+        map.set(d.date, d);
+      }
+    });
 
+    if (
+      selectedDateDTR &&
+      String(selectedDateDTR.userId) === String(selectedEmployee) &&
+      selectedDateDTR.date >= startStr &&
+      selectedDateDTR.date <= endStr
+    ) {
+      map.set(selectedDateDTR.date, selectedDateDTR);
+    }
+
+    return Array.from(map.values());
+  }, [userDTRs, selectedDateDTR, selectedEmployee, weekRange]);
+
+  const stats = useMemo<DTRStat[]>(() => {
     let totalMinutes = 0;
     let daysPresent = 0;
     let overtimeCount = 0;
@@ -207,7 +279,7 @@ export default function DTRTracking() {
       d.sessions.forEach((s) => {
         // Total Work from completed sessions/items (cross-date: recompute from entries when stored total is 0)
         const [h, m] = (s.DTRTotalWork || "00:00").split(":").map(Number);
-        let workMin = h * 60 + m;
+        let workMin = (h || 0) * 60 + (m || 0);
         if (workMin === 0 && Array.isArray(s.fullDTR)) {
           s.fullDTR.forEach((e: { type?: string; status?: string; startTime?: string; endTime?: string }) => {
             if ((e.type || "").toLowerCase() !== "work" || e.status !== "done" || !e.startTime || !e.endTime) return;
@@ -225,14 +297,13 @@ export default function DTRTracking() {
           // Realtime addition for active work entry
           if (e.type === "work" && e.status === "active" && e.startTime) {
             const [startH, startM] = e.startTime.split(":").map(Number);
-            const startDate = new Date(d.date);
-            startDate.setHours(startH, startM, 0, 0);
-
-            // If entry is from today, use 'now'
-            // If it's from a previous day (rare in DTR but possible if session spans), use end of that day or now
-            const diffMs = now.getTime() - startDate.getTime();
-            if (diffMs > 0) {
-              totalMinutes += Math.floor(diffMs / 60000);
+            if (!isNaN(startH) && !isNaN(startM)) {
+              const [dYear, dMonth, dDay] = d.date.split("-").map(Number);
+              const startDate = new Date(dYear, dMonth - 1, dDay, startH, startM, 0, 0);
+              const diffMs = now.getTime() - startDate.getTime();
+              if (diffMs > 0) {
+                totalMinutes += Math.floor(diffMs / 60000);
+              }
             }
           }
         });
@@ -273,7 +344,7 @@ export default function DTRTracking() {
         description: "Clock-in delay occurrences",
       },
     ];
-  }, [userDTRs, weekRange]);
+  }, [weekDTRs, weekRange, now]);
 
   return (
     <motion.div

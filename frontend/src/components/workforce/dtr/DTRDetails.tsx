@@ -111,6 +111,60 @@ function formatCreditsToHoursMinutes(credits: string): string {
   return `${paddedHours} hours and ${paddedMinutes} minutes`;
 }
 
+function getLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function computeActiveElapsed(
+  startTime?: string,
+  dtrDate?: string,
+  now: Date = new Date()
+): { totalSeconds: number; totalMinutes: number } {
+  if (!startTime) return { totalSeconds: 0, totalMinutes: 0 };
+  const [h, m] = startTime.split(":").map(Number);
+  if (isNaN(h) || isNaN(m)) return { totalSeconds: 0, totalMinutes: 0 };
+
+  let startYear = now.getFullYear();
+  let startMonth = now.getMonth();
+  let startDay = now.getDate();
+
+  if (dtrDate && /^\d{4}-\d{2}-\d{2}/.test(dtrDate)) {
+    const [y, mon, d] = dtrDate.split("T")[0].split("-").map(Number);
+    if (!isNaN(y) && !isNaN(mon) && !isNaN(d)) {
+      startYear = y;
+      startMonth = mon - 1;
+      startDay = d;
+    }
+  }
+
+  const startDate = new Date(startYear, startMonth, startDay, h, m, 0, 0);
+  const diffMs = now.getTime() - startDate.getTime();
+
+  if (diffMs <= 0) return { totalSeconds: 0, totalMinutes: 0 };
+
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  return { totalSeconds, totalMinutes };
+}
+
+function formatActiveDuration(totalSeconds: number): string {
+  if (totalSeconds <= 0) return "0s";
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${String(seconds).padStart(2, "0")}s`;
+  }
+  if (minutes > 0) {
+    return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+  }
+  return `${seconds}s`;
+}
+
 export default function DTRDetails({
   dtr,
   selectedDate,
@@ -127,6 +181,19 @@ export default function DTRDetails({
   const [showMapModal, setShowMapModal] = useState(false);
   const [showTripStatusModal, setShowTripStatusModal] = useState(false);
   const [selectedTripEntry, setSelectedTripEntry] = useState<any>(null);
+
+  // Live timer ticker: updates every second so elapsed time and totals count live
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const isDateToday = useMemo(() => {
+    const todayStr = getLocalDateString(now);
+    return selectedDate.split("T")[0] === todayStr;
+  }, [selectedDate, now]);
 
   // Fetch declined entries when userId and date are available
   useEffect(() => {
@@ -178,54 +245,126 @@ export default function DTRDetails({
   );
 
   const actualEnd = useMemo(() => {
+    const hasActive = allEntries.some((e) => e.status === "active");
+    if (hasActive) {
+      const activeEntry = allEntries.find((e) => e.status === "active");
+      const typeLabel = (activeEntry?.type || "work").replace("-", " ");
+      return `In progress (${typeLabel})`;
+    }
     const lastWorkDone = [...allEntries]
       .filter(
         (e) => (e.type || "").toLowerCase() === "work" && e.status === "done"
       )
       .pop();
-    return lastWorkDone?.endTime || (allEntries.some(e => e.status === "active") ? "In progress" : "Not ended");
+    return lastWorkDone?.endTime || "Not ended";
   }, [allEntries]);
 
-  /** Per-session display total work: use stored value, or recompute from entries when cross-midnight made it 0 */
+  /** Per-session display total work: use stored value + recomputed + live active work */
   const sessionDisplayWork = (s: { DTRTotalWork?: string; fullDTR?: Array<{ type?: string; status?: string; startTime?: string; endTime?: string }> }) => {
     const stored = s.DTRTotalWork || "00:00";
     const [ah, am] = stored.split(":").map(Number);
-    if (ah * 60 + am > 0) return stored;
-    let computed = 0;
-    (s.fullDTR || []).forEach((e: { type?: string; status?: string; startTime?: string; endTime?: string }) => {
-      if ((e.type || "").toLowerCase() !== "work" || e.status !== "done" || !e.startTime || !e.endTime) return;
-      computed += durationMinutesBetween(e.startTime, e.endTime);
-    });
-    return computed > 0 ? minutesToHHMM(computed) : stored;
+    let workMin = (ah || 0) * 60 + (am || 0);
+
+    if (workMin === 0 && Array.isArray(s.fullDTR)) {
+      s.fullDTR.forEach((e) => {
+        if ((e.type || "").toLowerCase() !== "work" || e.status !== "done" || !e.startTime || !e.endTime) return;
+        workMin += durationMinutesBetween(e.startTime, e.endTime);
+      });
+    }
+
+    if (isDateToday && Array.isArray(s.fullDTR)) {
+      const activeWork = s.fullDTR.find(
+        (e) => (e.type || "").toLowerCase() === "work" && e.status === "active" && e.startTime
+      );
+      if (activeWork && activeWork.startTime) {
+        const { totalMinutes } = computeActiveElapsed(activeWork.startTime, dtr?.date || selectedDate, now);
+        workMin += totalMinutes;
+      }
+    }
+
+    return minutesToHHMM(workMin);
+  };
+
+  /** Per-session display total break: stored value + live active break */
+  const sessionDisplayBreak = (s: { DTRTotalBreak?: string; fullDTR?: Array<{ type?: string; status?: string; startTime?: string; endTime?: string }> }) => {
+    const stored = s.DTRTotalBreak || "00:00";
+    const [bh, bm] = stored.split(":").map(Number);
+    let breakMin = (bh || 0) * 60 + (bm || 0);
+
+    if (isDateToday && Array.isArray(s.fullDTR)) {
+      const activeBreak = s.fullDTR.find((e) => {
+        const t = (e.type || "").toLowerCase();
+        return (t === "break" || t === "bio-break" || t === "clinic break") && e.status === "active" && e.startTime;
+      });
+      if (activeBreak && activeBreak.startTime) {
+        const { totalMinutes } = computeActiveElapsed(activeBreak.startTime, dtr?.date || selectedDate, now);
+        breakMin += totalMinutes;
+      }
+    }
+
+    return minutesToHHMM(breakMin);
+  };
+
+  /** Per-session display total meal: stored value + live active meal */
+  const sessionDisplayMeal = (s: { DTRTotalMeal?: string; fullDTR?: Array<{ type?: string; status?: string; startTime?: string; endTime?: string }> }) => {
+    const stored = s.DTRTotalMeal || "00:00";
+    const [mh, mm] = stored.split(":").map(Number);
+    let mealMin = (mh || 0) * 60 + (mm || 0);
+
+    if (isDateToday && Array.isArray(s.fullDTR)) {
+      const activeMeal = s.fullDTR.find(
+        (e) => (e.type || "").toLowerCase() === "meal" && e.status === "active" && e.startTime
+      );
+      if (activeMeal && activeMeal.startTime) {
+        const { totalMinutes } = computeActiveElapsed(activeMeal.startTime, dtr?.date || selectedDate, now);
+        mealMin += totalMinutes;
+      }
+    }
+
+    return minutesToHHMM(mealMin);
   };
 
   const dailyTotals = useMemo(() => {
-    if (!dtr) return { actual: "0h 0m", scheduled: "0h 0m" };
+    if (!dtr) return { actual: "0h 0m", scheduled: "0h 0m", isLive: false };
     let actual = 0;
     let scheduled = 0;
+    let isLive = false;
+
     dtr.sessions.forEach(s => {
       const [ah, am] = (s.DTRTotalWork || "00:00").split(":").map(Number);
-      actual += ah * 60 + am;
+      let sessionActual = (ah || 0) * 60 + (am || 0);
       const [sh, sm] = (s.workCredits || "00:00").split(":").map(Number);
-      scheduled += sh * 60 + sm;
-    });
-    // Cross-date fix: if backend reported 0 actual but we have done work entries spanning midnight, recompute from entries
-    if (actual === 0) {
-      let computedActual = 0;
-      dtr.sessions.forEach(s => {
-        (s.fullDTR || []).forEach((e: { type?: string; status?: string; startTime?: string; endTime?: string; duration?: string }) => {
+      scheduled += (sh || 0) * 60 + (sm || 0);
+
+      // Cross-date fix: if stored was 0, compute from done work entries
+      if (sessionActual === 0 && Array.isArray(s.fullDTR)) {
+        s.fullDTR.forEach((e) => {
           if ((e.type || "").toLowerCase() !== "work" || e.status !== "done" || !e.startTime || !e.endTime) return;
-          const mins = durationMinutesBetween(e.startTime, e.endTime);
-          computedActual += mins;
+          sessionActual += durationMinutesBetween(e.startTime, e.endTime);
         });
-      });
-      if (computedActual > 0) actual = computedActual;
-    }
+      }
+
+      // Add real-time active work minutes
+      if (isDateToday && Array.isArray(s.fullDTR)) {
+        const activeWork = s.fullDTR.find(
+          (e) => (e.type || "").toLowerCase() === "work" && e.status === "active" && e.startTime
+        );
+        if (activeWork && activeWork.startTime) {
+          const { totalMinutes } = computeActiveElapsed(activeWork.startTime, dtr.date || selectedDate, now);
+          sessionActual += totalMinutes;
+          isLive = true;
+        }
+      }
+
+      actual += sessionActual;
+    });
+
     return {
       actual: `${Math.floor(actual / 60)}h ${actual % 60}m`,
       scheduled: `${Math.floor(scheduled / 60)}h ${scheduled % 60}m`,
+      isLive,
     };
-  }, [dtr]);
+  }, [dtr, isDateToday, selectedDate, now]);
 
   if (!dtr) {
     return (
@@ -281,8 +420,14 @@ export default function DTRDetails({
                 Total Actual Work
               </span>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-green-600">
+                <span className="text-2xl font-black text-green-600 tabular-nums flex items-center gap-2">
                   {dailyTotals.actual}
+                  {dailyTotals.isLive && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold border border-emerald-300 flex items-center gap-1 animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Live
+                    </span>
+                  )}
                 </span>
                 <span className="text-xs text-blue-600 font-medium">
                   / {dailyTotals.scheduled} scheduled
@@ -297,65 +442,96 @@ export default function DTRDetails({
         className="flex flex-col gap-6 mb-6"
         variants={containerVariants}
       >
-        {dtr.sessions.map((s, idx) => (
-          <motion.div
-            key={`sess-${idx}-${s.scheduledStartTime}-${s.scheduledEndTime}`}
-            className="rounded-lg border border-gray-200 p-4"
-            variants={itemVariants}
-            whileHover={{ scale: 1.01, boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
-              <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-                <div className="text-sm font-medium text-green-900">
-                  Actual Work
-                </div>
-                <div className="text-xl font-bold text-green-700 line-clamp-1">
-                  {formatCreditsToHoursMinutes(sessionDisplayWork(s))}
-                </div>
-                <div className="text-xs text-green-700/80">
-                  {formatCreditsToHoursMinutes(s.workCredits)} scheduled
-                </div>
-              </div>
+        {dtr.sessions.map((s, idx) => {
+          const hasActiveWork = isDateToday && Array.isArray(s.fullDTR) && s.fullDTR.some(
+            (e) => (e.type || "").toLowerCase() === "work" && e.status === "active"
+          );
+          const hasActiveBreak = isDateToday && Array.isArray(s.fullDTR) && s.fullDTR.some((e) => {
+            const t = (e.type || "").toLowerCase();
+            return (t === "break" || t === "bio-break" || t === "clinic break") && e.status === "active";
+          });
+          const hasActiveMeal = isDateToday && Array.isArray(s.fullDTR) && s.fullDTR.some(
+            (e) => (e.type || "").toLowerCase() === "meal" && e.status === "active"
+          );
 
-              <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
-                <div className="text-sm font-medium text-amber-900">
-                  Actual Break
+          return (
+            <motion.div
+              key={`sess-${idx}-${s.scheduledStartTime}-${s.scheduledEndTime}`}
+              className="rounded-lg border border-gray-200 p-4"
+              variants={itemVariants}
+              whileHover={{ scale: 1.01, boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }}
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
+                <div className="bg-green-50 rounded-lg p-4 border border-green-100">
+                  <div className="text-sm font-medium text-green-900 flex items-center justify-between">
+                    <span>Actual Work</span>
+                    {hasActiveWork && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-200 text-emerald-800 font-semibold uppercase tracking-wider flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xl font-bold text-green-700 line-clamp-1 tabular-nums">
+                    {formatCreditsToHoursMinutes(sessionDisplayWork(s))}
+                  </div>
+                  <div className="text-xs text-green-700/80">
+                    {formatCreditsToHoursMinutes(s.workCredits)} scheduled
+                  </div>
                 </div>
-                <div className="text-xl font-bold text-amber-700 line-clamp-1">
-                  {formatCreditsToHoursMinutes(s.DTRTotalBreak)}
-                </div>
-                <div className="text-xs text-amber-700/80">
-                  {formatCreditsToHoursMinutes(s.breakCredits)} scheduled (
-                  {pluralize(s.breakCount, "break")})
-                </div>
-              </div>
 
-              <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
-                <div className="text-sm font-medium text-purple-900">
-                  Actual Meal
+                <div className="bg-amber-50 rounded-lg p-4 border border-amber-100">
+                  <div className="text-sm font-medium text-amber-900 flex items-center justify-between">
+                    <span>Actual Break</span>
+                    {hasActiveBreak && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-200 text-amber-800 font-semibold uppercase tracking-wider flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xl font-bold text-amber-700 line-clamp-1 tabular-nums">
+                    {formatCreditsToHoursMinutes(sessionDisplayBreak(s))}
+                  </div>
+                  <div className="text-xs text-amber-700/80">
+                    {formatCreditsToHoursMinutes(s.breakCredits)} scheduled (
+                    {pluralize(s.breakCount, "break")})
+                  </div>
                 </div>
-                <div className="text-xl font-bold text-purple-700 line-clamp-1">
-                  {formatCreditsToHoursMinutes(s.DTRTotalMeal)}
-                </div>
-                <div className="text-xs text-purple-700/80">
-                  {formatCreditsToHoursMinutes(s.mealCredits)} scheduled{" "}
-                  {s.startMealTime ? `(${formatTime(s.startMealTime)})` : ""}
-                </div>
-              </div>
 
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                <div className="text-sm font-medium text-blue-900">
-                  Scheduled Span
+                <div className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                  <div className="text-sm font-medium text-purple-900 flex items-center justify-between">
+                    <span>Actual Meal</span>
+                    {hasActiveMeal && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-200 text-purple-800 font-semibold uppercase tracking-wider flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-600 animate-pulse" />
+                        Active
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xl font-bold text-purple-700 line-clamp-1 tabular-nums">
+                    {formatCreditsToHoursMinutes(sessionDisplayMeal(s))}
+                  </div>
+                  <div className="text-xs text-purple-700/80">
+                    {formatCreditsToHoursMinutes(s.mealCredits)} scheduled{" "}
+                    {s.startMealTime ? `(${formatTime(s.startMealTime)})` : ""}
+                  </div>
                 </div>
-                <div className="text-xl font-bold text-blue-700 line-clamp-1">
-                  {formatTime(s.scheduledStartTime)} –{" "}
-                  {formatTime(s.scheduledEndTime)}
+
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                  <div className="text-sm font-medium text-blue-900">
+                    Scheduled Span
+                  </div>
+                  <div className="text-xl font-bold text-blue-700 line-clamp-1">
+                    {formatTime(s.scheduledStartTime)} –{" "}
+                    {formatTime(s.scheduledEndTime)}
+                  </div>
+                  <div className="text-xs text-blue-700/80">Shift schedule</div>
                 </div>
-                <div className="text-xs text-blue-700/80">Shift schedule</div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </motion.div>
 
       <motion.div
@@ -477,7 +653,10 @@ export default function DTRDetails({
                       </>
                     )}
                     {!entry.endTime && isActive && (
-                      <span className="ml-2 text-xs text-amber-600 font-medium">• Ongoing</span>
+                      <span className="ml-2 text-xs text-emerald-600 font-medium inline-flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Ongoing
+                      </span>
                     )}
                   </div>
                 </div>
@@ -485,9 +664,20 @@ export default function DTRDetails({
 
               {/* Duration and Status */}
               <div className="mt-2 sm:mt-0 pl-7 sm:pl-0 text-left sm:text-right w-full sm:w-auto">
-                <div className={`text-sm italic ${isActive ? 'text-amber-600' : 'text-gray-700'}`}>
+                <div className={`text-sm tabular-nums ${isActive ? 'font-semibold text-emerald-600' : 'text-gray-700 italic'}`}>
                   {isActive
-                    ? "Currently Active"
+                    ? (() => {
+                        const elapsed = computeActiveElapsed(entry.startTime, dtr?.date || selectedDate, now);
+                        return (
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            {formatActiveDuration(elapsed.totalSeconds)} elapsed
+                          </span>
+                        );
+                      })()
                     : (() => {
                         if (typeof entry.duration === "object") {
                           return formatDurationObjectToReadable(entry.duration);
@@ -503,13 +693,14 @@ export default function DTRDetails({
                         return formatDurationToReadable(raw);
                       })()}
                 </div>
-                <div className={`text-xs capitalize mt-1 px-2 py-0.5 rounded-full inline-block ${isActive
-                  ? 'bg-amber-100 text-amber-700 font-medium'
+                <div className={`text-xs capitalize mt-1 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1 font-medium ${isActive
+                  ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
                   : entry.status === 'done'
                     ? 'bg-green-100 text-green-700'
                     : 'bg-gray-100 text-gray-600'
                   }`}>
-                  {entry.status}
+                  {isActive && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
+                  {isActive ? "Active (In progress)" : entry.status}
                 </div>
               </div>
             </motion.div>

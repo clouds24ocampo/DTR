@@ -220,10 +220,13 @@ export const useDTRStore = create(
               dtrs: DTRDocLite[];
             }>(data);
             const list = payload?.dtrs ?? [];
-            set({
+            set((state) => ({
               filteredDTRs: list,
-              ownDTR: list.length > 0 ? list[0] : null,
-            });
+              ownDTR:
+                state.ownDTR && state.ownDTR.userId === payloadIn.userId
+                  ? (list.length > 0 ? list[0] : null)
+                  : state.ownDTR,
+            }));
           },
           undefined,
           "Failed to fetch DTRs by user & date."
