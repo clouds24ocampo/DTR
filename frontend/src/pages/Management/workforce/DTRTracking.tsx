@@ -395,7 +395,7 @@ export default function DTRTracking() {
         {/* Right Panel (DTR Details) */}
         <motion.div className="w-full lg:flex-1 min-w-0 flex flex-col gap-4" variants={itemVariants}>
           {selectedEmployee && (
-            <DTRRecordsTable dtrs={userDTRs} selectedDate={selectedDate} onSelect={setSelectedDate} />
+            <DTRRecordsTable dtrs={userDTRs} selectedDate={selectedDate} onSelect={setSelectedDate} loading={loading} />
           )}
           <motion.div
             className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] flex flex-col flex-1 min-h-0"

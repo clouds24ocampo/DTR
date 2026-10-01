@@ -3,13 +3,7 @@ import { format, parseISO, addMonths, subMonths } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DTRDocLite } from "../../../types/global/dtr/dtr.type";
 import { formatTime12 } from "../../../pages/Public/clockUi";
-
-const toMin = (hhmm?: string) => {
-  if (!hhmm || !/^\d{1,2}:\d{2}$/.test(hhmm)) return 0;
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + m;
-};
-const fmt = (min: number) => (min <= 0 ? "—" : `${Math.floor(min / 60)}h ${min % 60}m`);
+import { fmtDuration as fmt, summarizeDay } from "../../../utils/dtr/dtr.summary";
 
 const Chip = ({ children, cls }: { children: string; cls: string }) => (
   <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${cls}`}>{children}</span>
@@ -19,10 +13,11 @@ type Props = {
   dtrs: DTRDocLite[];
   selectedDate: string;
   onSelect: (date: string) => void;
+  loading?: boolean;
 };
 
 /** One row per day of the selected month: time in/out, hours, tags. Click a row to open that day. */
-export default function DTRRecordsTable({ dtrs, selectedDate, onSelect }: Props) {
+export default function DTRRecordsTable({ dtrs, selectedDate, onSelect, loading }: Props) {
   const monthKey = selectedDate.slice(0, 7);
   const today = format(new Date(), "yyyy-MM-dd");
 
@@ -31,19 +26,8 @@ export default function DTRRecordsTable({ dtrs, selectedDate, onSelect }: Props)
       dtrs
         .filter((d) => d.date?.startsWith(monthKey))
         .sort((a, b) => b.date.localeCompare(a.date))
-        .map((d) => {
-          const entries = d.sessions.flatMap((s) => s.fullDTR ?? []);
-          const work = entries.filter((e) => (e.type || "").toLowerCase() === "work");
-          const first = work[0];
-          const last = [...work].reverse().find((e) => e.endTime);
-          const active = work.some((e) => e.status === "active");
-          const workMin = d.sessions.reduce((n, s) => n + toMin(s.DTRTotalWork), 0);
-          const breakMin = d.sessions.reduce((n, s) => n + toMin(s.DTRTotalBreak) + toMin(s.DTRTotalMeal), 0);
-          const late = entries.some((e) => e.startTag?.toLowerCase().includes("late"));
-          const ot = entries.some((e) => e.endTag?.toLowerCase().includes("overtime"));
-          return { date: d.date, timeIn: first?.startTime, timeOut: last?.endTime, active, workMin, breakMin, late, ot, has: entries.length > 0 };
-        })
-        .filter((r) => r.has),
+        .map((d) => summarizeDay(d))
+        .filter((r) => r.hasEntries),
     [dtrs, monthKey]
   );
 
@@ -87,7 +71,9 @@ export default function DTRRecordsTable({ dtrs, selectedDate, onSelect }: Props)
       </div>
 
       {rows.length === 0 ? (
-        <p className="px-6 py-10 text-center text-sm text-slate-500">No time records this month.</p>
+        <p className="px-6 py-10 text-center text-sm text-slate-500">
+          {loading ? "Loading records…" : "No time records this month. Use the arrows to check another month."}
+        </p>
       ) : (
         <div className="max-h-[28rem] overflow-auto">
           <table className="w-full text-sm">
@@ -119,8 +105,8 @@ export default function DTRRecordsTable({ dtrs, selectedDate, onSelect }: Props)
                   <td className="space-x-1 px-3 py-3 sm:pr-6">
                     {r.active && <Chip cls="bg-emerald-50 text-emerald-700">Working</Chip>}
                     {r.late && <Chip cls="bg-amber-50 text-amber-700">Late</Chip>}
-                    {r.ot && <Chip cls="bg-violet-50 text-violet-700">Overtime</Chip>}
-                    {!r.active && !r.late && !r.ot && <Chip cls="bg-slate-100 text-slate-600">On time</Chip>}
+                    {r.overtime && <Chip cls="bg-violet-50 text-violet-700">Overtime</Chip>}
+                    {!r.active && !r.late && !r.overtime && <Chip cls="bg-slate-100 text-slate-600">On time</Chip>}
                   </td>
                 </tr>
               ))}

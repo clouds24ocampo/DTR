@@ -264,7 +264,7 @@ export default function DTR() {
       {/* Month at a glance: click a row to open that day */}
       {user && (
         <motion.div variants={itemVariants}>
-          <DTRRecordsTable dtrs={userDTRs} selectedDate={selectedDate} onSelect={setSelectedDate} />
+          <DTRRecordsTable dtrs={userDTRs} selectedDate={selectedDate} onSelect={setSelectedDate} loading={loading} />
         </motion.div>
       )}
 

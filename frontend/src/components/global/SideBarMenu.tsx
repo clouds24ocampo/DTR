@@ -888,7 +888,7 @@ export const MENU_MAP: Record<string, MenuItem[]> = {
 };
 
 export const getMenuItems = (position: string): MenuItem[] => {
-  if (!position) return MENU_MAP.user || [];
+  if (!position) return MENU_MAP.Employee;
 
   const normalizedPosition = position.toLowerCase().trim();
 
@@ -916,5 +916,5 @@ export const getMenuItems = (position: string): MenuItem[] => {
     if (/operation/.test(normalizedPosition)) return MENU_MAP["Employee - Operation"];
   }
 
-  return MENU_MAP.user || [];
+  return MENU_MAP.Employee;
 };
