@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format, parseISO, addMonths, subMonths } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DTRDocLite } from "../../../types/global/dtr/dtr.type";
@@ -19,16 +19,23 @@ type Props = {
 /** One row per day of the selected month: time in/out, hours, tags. Click a row to open that day. */
 export default function DTRRecordsTable({ dtrs, selectedDate, onSelect, loading }: Props) {
   const monthKey = selectedDate.slice(0, 7);
-  const today = format(new Date(), "yyyy-MM-dd");
+  // Minute tick so today's running work segment stays live.
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+  const today = format(now, "yyyy-MM-dd");
+  const nowHHMM = format(now, "HH:mm");
 
   const rows = useMemo(
     () =>
       dtrs
         .filter((d) => d.date?.startsWith(monthKey))
         .sort((a, b) => b.date.localeCompare(a.date))
-        .map((d) => summarizeDay(d))
+        .map((d) => summarizeDay(d, d.date === today ? nowHHMM : undefined))
         .filter((r) => r.hasEntries),
-    [dtrs, monthKey]
+    [dtrs, monthKey, today, nowHHMM]
   );
 
   const totals = useMemo(
@@ -39,7 +46,12 @@ export default function DTRRecordsTable({ dtrs, selectedDate, onSelect, loading 
   const shift = (dir: 1 | -1) => {
     const base = parseISO(`${monthKey}-01`);
     const next = format(dir === 1 ? addMonths(base, 1) : subMonths(base, 1), "yyyy-MM");
-    onSelect(next === today.slice(0, 7) ? today : `${next}-01`);
+    const latest = dtrs
+      .filter((d) => d.date?.startsWith(next) && summarizeDay(d).hasEntries)
+      .map((d) => d.date)
+      .sort()
+      .pop();
+    onSelect(latest ?? (next === today.slice(0, 7) ? today : `${next}-01`));
   };
 
   return (
@@ -104,8 +116,8 @@ export default function DTRRecordsTable({ dtrs, selectedDate, onSelect, loading 
                   <td className="hidden px-3 py-3 tabular-nums text-slate-500 sm:table-cell">{fmt(r.breakMin)}</td>
                   <td className="space-x-1 px-3 py-3 sm:pr-6">
                     {r.active && <Chip cls="bg-emerald-50 text-emerald-700">Working</Chip>}
-                    {r.late && <Chip cls="bg-amber-50 text-amber-700">Late</Chip>}
-                    {r.overtime && <Chip cls="bg-violet-50 text-violet-700">Overtime</Chip>}
+                    {r.late && <Chip cls="bg-amber-50 text-amber-700">{r.lateTag ?? "Late"}</Chip>}
+                    {r.overtime && <Chip cls="bg-violet-50 text-violet-700">{r.overtimeTag ?? "Overtime"}</Chip>}
                     {!r.active && !r.late && !r.overtime && <Chip cls="bg-slate-100 text-slate-600">On time</Chip>}
                   </td>
                 </tr>

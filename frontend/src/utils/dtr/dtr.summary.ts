@@ -20,6 +20,9 @@ export type DaySummary = {
   breakMin: number;
   late: boolean;
   overtime: boolean;
+  /** Original tag text, e.g. "Late 5 Minutes" / "Overtime 1 Minute". */
+  lateTag?: string;
+  overtimeTag?: string;
   hasEntries: boolean;
 };
 
@@ -29,6 +32,9 @@ export function summarizeDay(d: DTRDocLite, nowHHMM?: string): DaySummary {
   const work = entries.filter((e) => (e.type || "").toLowerCase() === "work");
   const running = work.find((e) => e.status === "active");
   const last = [...work].reverse().find((e) => e.endTime);
+
+  const lateTag = entries.find((e) => e.startTag?.toLowerCase().includes("late"))?.startTag;
+  const overtimeTag = entries.find((e) => e.endTag?.toLowerCase().includes("overtime"))?.endTag;
 
   let workMin = d.sessions.reduce((n, s) => n + toMin(s.DTRTotalWork), 0);
   if (running && nowHHMM) workMin += Math.max(0, toMin(nowHHMM) - toMin(running.startTime));
@@ -40,8 +46,10 @@ export function summarizeDay(d: DTRDocLite, nowHHMM?: string): DaySummary {
     active: Boolean(running),
     workMin,
     breakMin: d.sessions.reduce((n, s) => n + toMin(s.DTRTotalBreak) + toMin(s.DTRTotalMeal), 0),
-    late: entries.some((e) => e.startTag?.toLowerCase().includes("late")),
-    overtime: entries.some((e) => e.endTag?.toLowerCase().includes("overtime")),
+    late: Boolean(lateTag),
+    overtime: Boolean(overtimeTag),
+    lateTag,
+    overtimeTag,
     hasEntries: entries.length > 0,
   };
 }

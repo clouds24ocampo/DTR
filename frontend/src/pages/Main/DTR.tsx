@@ -180,7 +180,7 @@ export default function DTR() {
         },
         {
           title: "Days Present",
-          value: weekDTRs.length,
+          value: weekDTRs.filter((d) => d.sessions.some((s) => s.fullDTR?.length)).length,
           icon: CalendarCheck,
           color: "green",
           description: "Unique days with time entries",
