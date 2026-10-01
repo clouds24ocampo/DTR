@@ -9,7 +9,9 @@ services:
   mongo:
     image: mongo:7
     restart: unless-stopped
-    # NOT published to the host: only the backend container can reach it.
+    # Bound to localhost on the host: secure and accessible via SSH tunnel (Compass)
+    ports:
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongo-data:/data/db
     healthcheck:
