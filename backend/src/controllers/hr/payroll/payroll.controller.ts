@@ -56,8 +56,12 @@ export const getPayrolls = async (req: Request, res: Response) => {
         const filter: any = {};
         if (query.employeeId) filter.employee = query.employeeId;
         if (query.startDate && query.endDate) {
-            filter.periodStart = { $gte: new Date(query.startDate as string) };
-            filter.periodEnd = { $lte: new Date(query.endDate as string) };
+            const start = new Date(query.startDate as string);
+            start.setUTCHours(0, 0, 0, 0);
+            const end = new Date(query.endDate as string);
+            end.setUTCHours(23, 59, 59, 999);
+            filter.periodStart = { $gte: start };
+            filter.periodEnd = { $lte: end };
         }
         
         const payrolls = await PayrollService.getPayrolls(filter);

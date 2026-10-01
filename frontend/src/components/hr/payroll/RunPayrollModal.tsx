@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ModalHeader } from "../../global/modals/ModalHeader";
 import { ModalFooter } from "../../global/modals/ModalFooter";
@@ -26,6 +26,13 @@ export default function RunPayrollModal({
   const [startDate, setStartDate] = useState(initialStartDate);
   const [endDate, setEndDate] = useState(initialEndDate);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setStartDate(initialStartDate);
+      setEndDate(initialEndDate);
+    }
+  }, [open, initialStartDate, initialEndDate]);
 
   const handleRun = async () => {
     if (!startDate || !endDate) return;

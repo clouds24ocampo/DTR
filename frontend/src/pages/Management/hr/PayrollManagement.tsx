@@ -71,22 +71,22 @@ export default function PayrollManagement() {
 
         switch (periodType) {
             case "this_month":
-                newStart = now.startOf('month').format('YYYY-MM-DD');
-                newEnd = now.endOf('month').format('YYYY-MM-DD');
+                newStart = now.clone().startOf('month').format('YYYY-MM-DD');
+                newEnd = now.clone().endOf('month').format('YYYY-MM-DD');
                 break;
             case "last_month": {
-                const last = now.subtract(1, 'month');
+                const last = now.clone().subtract(1, 'month');
                 newStart = last.startOf('month').format('YYYY-MM-DD');
                 newEnd = last.endOf('month').format('YYYY-MM-DD');
                 break;
             }
             case "1st_half":
-                newStart = now.startOf('month').format('YYYY-MM-DD');
-                newEnd = now.date(15).format('YYYY-MM-DD');
+                newStart = now.clone().startOf('month').format('YYYY-MM-DD');
+                newEnd = now.clone().date(15).format('YYYY-MM-DD');
                 break;
             case "2nd_half":
-                newStart = now.date(16).format('YYYY-MM-DD');
-                newEnd = now.endOf('month').format('YYYY-MM-DD');
+                newStart = now.clone().date(16).format('YYYY-MM-DD');
+                newEnd = now.clone().endOf('month').format('YYYY-MM-DD');
                 break;
         }
 
