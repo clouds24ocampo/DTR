@@ -9,7 +9,7 @@ cron.schedule("* * * * *", async () => {
     console.log("[AUTO-END] Skipped: MongoDB not connected");
     return;
   }
-  const today = normalizeDate(new Date().toISOString().slice(0, 10));
+  const today = normalizeDate();
 
   try {
     const schedules = await Schedule.find({ date: today }).select("userId");

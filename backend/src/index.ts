@@ -1,3 +1,7 @@
+import moment from "moment-timezone";
+// Enforce Philippine Standard Time (UTC+8) across backend
+moment.tz.setDefault("Asia/Manila");
+
 import { appConfig } from "src/config/app.config";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -8,6 +12,7 @@ import jwt from "jsonwebtoken";
 import path from "path";
 import { errorHandler } from "./utils/global/error";
 import connectToMongoDB from "./db/db.connect";
+import { repairUtcActiveEntries } from "./utils/global/repair-dtr";
 import { DefaultEventsMap, Server, Socket } from "socket.io";
 import "dotenv/config";
 import "./dtr.cron";
@@ -812,6 +817,7 @@ freedomIo.on("connection", (socket) => {
 const startServer = async () => {
   try {
     await connectToMongoDB();
+    await repairUtcActiveEntries();
     server.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);
     });

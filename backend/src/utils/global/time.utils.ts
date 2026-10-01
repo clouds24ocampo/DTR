@@ -1,4 +1,7 @@
-import moment, { Moment } from "moment";
+import moment, { Moment } from "moment-timezone";
+
+// Anchor all backend time computations to Philippine Standard Time (UTC+8)
+moment.tz.setDefault("Asia/Manila");
 
 export const pad2 = (n: number) => String(n).padStart(2, "0");
 
@@ -35,12 +38,12 @@ export const addHHMM = (a: string, b: string) =>
 
 export function normalizeDate(date?: string): string {
   return typeof date === "string" && date
-    ? moment(date, "YYYY-MM-DD", true).format("YYYY-MM-DD")
-    : moment().format("YYYY-MM-DD");
+    ? moment.tz(date, "YYYY-MM-DD", true, "Asia/Manila").format("YYYY-MM-DD")
+    : moment.tz("Asia/Manila").format("YYYY-MM-DD");
 }
 
 export function nowHHMM(now?: string): { now: Moment; hhmm: string } {
-  const m = now ? moment(now, "HH:mm", true) : moment();
+  const m = now ? moment.tz(now, "HH:mm", "Asia/Manila") : moment.tz("Asia/Manila");
   return { now: m, hhmm: m.format("HH:mm") };
 }
 

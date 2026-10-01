@@ -12,6 +12,8 @@ RUN npm run build:release
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+ENV TZ=Asia/Manila
+RUN apk add --no-cache tzdata
 # Runtime needs the esbuild-external packages only (node-cron).
 # Optionals (kerberos/snappy/...) are skipped: the mongodb driver
 # runs fine without them.

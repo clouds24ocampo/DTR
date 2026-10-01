@@ -228,12 +228,11 @@ export default function DTRTracking() {
   }, [selectedEmployee, selectedDate, loadDTRsByUserAndDate]);
 
   const weekRange = useMemo(() => {
-    const curr = new Date(selectedDate);
-    const first = curr.getDate() - curr.getDay(); // Sunday
-    const last = first + 6; // Saturday
-
-    const firstDay = new Date(curr.setDate(first));
-    const lastDay = new Date(curr.setDate(last));
+    const [y, m, d] = selectedDate.split("-").map(Number);
+    const baseDate = new Date(y, m - 1, d);
+    const dayOfWeek = baseDate.getDay(); // 0 is Sunday
+    const firstDay = new Date(y, m - 1, d - dayOfWeek);
+    const lastDay = new Date(y, m - 1, d - dayOfWeek + 6);
 
     const options: Intl.DateTimeFormatOptions = { month: "short", day: "2-digit" };
     return {

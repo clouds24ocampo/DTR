@@ -28,6 +28,7 @@ services:
       mongo:
         condition: service_healthy
     environment:
+      TZ: Asia/Manila
       NODE_ENV: production
       PORT: "9001"
       MONGO_DB_URI: ${MONGO_DB_URI:-mongodb://mongo:27017/hrms}
