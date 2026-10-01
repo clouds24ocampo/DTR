@@ -44,3 +44,13 @@ jobs:
             git reset --hard origin/main
             docker compose --env-file .env.docker up -d --build
             docker compose --env-file .env.docker ps
+            echo "--- BACKEND LOGS ---"
+            docker compose --env-file .env.docker logs --tail=30 backend || true
+            echo "--- FRONTEND LOGS ---"
+            docker compose --env-file .env.docker logs --tail=30 frontend || true
+            echo "--- NGINX PROXY CONFIG ---"
+            grep -rn "proxy_pass" /etc/nginx/sites-enabled/ /etc/nginx/sites-available/ || true
+            if [ -f /etc/nginx/sites-available/dtr ]; then
+              sed -i 's/127.0.0.1:8080/127.0.0.1:5173/g' /etc/nginx/sites-available/dtr || true
+              nginx -t && systemctl reload nginx || true
+            fi

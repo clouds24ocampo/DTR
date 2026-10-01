@@ -53,6 +53,7 @@ services:
     # Bound to localhost: the host nginx (SSL) proxies to this.
     ports:
       - "127.0.0.1:5173:80"
+      - "127.0.0.1:8080:80"
 
   # One-off seeder. Creates admin/IT/schedules in the LOCAL mongo.
   # Run: docker compose --env-file .env.docker --profile seed run --rm seed
