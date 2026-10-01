@@ -634,12 +634,12 @@ export async function endDTRItemService(
   const dtr = (await DTR.findOne({ userId, date: targetDate })) as any;
   if (!dtr) throw new ServiceError("DTR record not found for given date.", 404);
 
+  // Ending an active entry must never depend on the schedule still existing: it is only
+  // used to tag the end (early/overtime). Without one the tag falls back to the DTR's own times.
   const schedule = await Schedule.findOne({ userId, date: targetDate });
-  if (!schedule)
-    throw new ServiceError("Schedule not found for given date.", 404);
 
   const dtrDoc = dtr as unknown as DTRDocLite;
-  const scheduleDoc = schedule as unknown as ScheduleDocLite;
+  const scheduleDoc = schedule as unknown as ScheduleDocLite | null;
 
   let endedCount = 0;
 
@@ -654,7 +654,8 @@ export async function endDTRItemService(
     if (activeIdx == null) continue;
 
     const active = session.fullDTR[activeIdx];
-    const schedSession = scheduleDoc.sessions[i];
+    const schedSession =
+      scheduleDoc?.sessions?.[i] ?? ({ fullSched: [] } as unknown as NormalizedScheduleSession);
 
     // If system timeout, use special endTag, otherwise compute normally
     const endTag = isSystemTimeout
