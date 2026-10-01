@@ -1038,10 +1038,21 @@ export async function updateTripApprovalService(input: {
   dtr.markModified("sessions");
   await dtr.save();
 
-  // Emit real-time update
-  io.emit("dtr:update", { dtr: dtr as unknown as DTRDocLite });
+  // Approved trip ends the day: close any still-active entries server-side
+  // (used to rely on the employee's clock page being open to do it).
+  if (approvalStatus === "approved") {
+    await endDTRItemService({
+      userId: String(dtr.userId),
+      date: dtr.date,
+      isSystemTimeout: true,
+    }).catch(() => undefined); // nothing active is fine
+  }
+  const fresh = (await DTR.findById(dtrId)) ?? dtr;
 
-  return dtr;
+  // Emit real-time update
+  io.emit("dtr:update", { dtr: fresh as unknown as DTRDocLite });
+
+  return fresh;
 }
 
 export async function cancelTripService(input: {

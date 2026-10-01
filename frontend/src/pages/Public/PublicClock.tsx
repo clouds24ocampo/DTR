@@ -253,6 +253,9 @@ export default function PublicClock() {
   }, [idNumber]);
 
   const [selectedAction, setSelectedAction] = useState<ActionId | "">("");
+  const [password, setPassword] = useState("");
+  const [verified, setVerified] = useState(false); // password checked + today's status loaded
+  const [verifying, setVerifying] = useState(false);
   const [issueType, setIssueType] = useState<IssueType | "">("");
   const [reason, setReason] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -263,7 +266,6 @@ export default function PublicClock() {
   const [checkingSchedule, setCheckingSchedule] = useState(false);
   const [foundUserId, setFoundUserId] = useState<string | null>(null);
   const [userSchedule, setUserSchedule] = useState<any | null>(null);
-  const [autoTimeoutChecked, setAutoTimeoutChecked] = useState(false);
   const [showGeoFenceModal, setShowGeoFenceModal] = useState(false);
   const [userLocation, setUserLocation] = useState<{
     lat: number;
@@ -318,6 +320,8 @@ export default function PublicClock() {
 
   // Check schedule and DTR status when ID is entered
   useEffect(() => {
+    setPassword(""); // never carry a password over to another ID
+    setVerified(false);
     const trimmedId = idNumber.trim();
     if (!trimmedId) {
       setHasSchedule(null);
@@ -370,31 +374,7 @@ export default function PublicClock() {
           setFoundUserId(userId);
           setUserSchedule(schedule);
 
-          // Load DTR to check current status
-          try {
-            const dtrs = await loadDTRsByUserAndDate({
-              kiosk: true,
-              userId: userId,
-              date: ymd,
-            }).catch((error) => {
-              // Handle 401 errors gracefully
-              if (error?.response?.status === 401) {
-                console.warn("DTR check requires authentication");
-                return [];
-              }
-              console.error("Error loading DTR:", error);
-              return [];
-            });
-
-            if (dtrs && dtrs.length > 0) {
-              setCurrentDTR(dtrs[0]);
-            } else {
-              setCurrentDTR(null);
-            }
-          } catch (dtrError) {
-            console.error("Error loading DTR:", dtrError);
-            setCurrentDTR(null);
-          }
+          setCurrentDTR(null); // today's status loads after the password is verified
 
           // Employee card comes with the kiosk schedule lookup (works logged out).
           setEmployeeInfo((schedule as any).employee ?? null);
@@ -621,93 +601,7 @@ export default function PublicClock() {
     return currentMinutes >= oneHourBefore;
   }, [earliestStartTime, isFlexTime]);
 
-  // Auto-timeout check: "System should timeout 15 minutes after the scheduled end time of the CURRENT active shift"
-  useEffect(() => {
-    // Flexible-time staff have no shift end; the backend closes their DTR at 23:45.
-    if (isFlexTime || !foundUserId || !isTimeIn || !userSchedule || !currentDTR) return;
-
-    // Check every minute
-    const checkInterval = setInterval(() => {
-      // If already checked/triggered, stop
-      if (autoTimeoutChecked) return;
-
-      const currentMinutes = getCurrentMinutes();
-      let shouldTimeout = false;
-
-      // Iterate through sessions to find which one is active and if it's within the timeout window
-      userSchedule.sessions.forEach((schedSession: any, index: number) => {
-        const dtrSession = currentDTR.sessions[index];
-        // Must have matching DTR session
-        if (!dtrSession) return;
-
-        // Check if this specific session has an active entry
-        const hasActiveEntry = dtrSession.fullDTR.some(
-          (item: any) => item.status === "active"
-        );
-
-        if (!hasActiveEntry) return;
-
-        // Get Scheduled End Time for this session
-        const endTime = schedSession.scheduledEndTime;
-        if (!endTime || endTime === "00:00") return;
-
-        const endMinutes = hhmmToMinutes(endTime);
-
-        // Define Window: [Scheduled End + 15 mins, Scheduled End + 60 mins]
-        // Example: End 17:00 (1020). Window 17:15 (1035) - 18:00 (1080).
-        const startWindow = endMinutes + 15;
-        const endWindow = endMinutes + 60;
-
-        // Check if current time falls within this window
-        // Note: Using >= startWindow ensures we catch it starting 15 mins after.
-        // Using <= endWindow provides a 60-minute catch window for auto-timeout.
-        if (currentMinutes >= startWindow && currentMinutes <= endWindow) {
-          shouldTimeout = true;
-        }
-      });
-
-      if (shouldTimeout) {
-        setAutoTimeoutChecked(true);
-        endItem({ userId: foundUserId, date: ymd, isSystemTimeout: true })
-          .then(() => {
-            setSuccessMessage(
-              "Automatically timed out (15 minutes after scheduled end time)."
-            );
-            // Refresh
-            return loadDTRsByUserAndDate({
-              kiosk: true,
-              userId: foundUserId,
-              date: ymd,
-            }).catch(() => null);
-          })
-          .then((dtrs) => {
-            if (dtrs && dtrs.length > 0) setCurrentDTR(dtrs[0]);
-            else setCurrentDTR(null);
-          })
-          .catch((err) => {
-            console.error("Auto-timeout failed", err);
-            setAutoTimeoutChecked(false);
-          });
-      }
-    }, 60000);
-
-    return () => clearInterval(checkInterval);
-  }, [
-    isFlexTime,
-    foundUserId,
-    isTimeIn,
-    userSchedule,
-    currentDTR,
-    endItem,
-    loadDTRsByUserAndDate,
-    autoTimeoutChecked,
-    ymd,
-  ]);
-
-  // Reset auto-timeout check flag when DTR changes or user changes
-  useEffect(() => {
-    setAutoTimeoutChecked(false);
-  }, [currentDTR, foundUserId]);
+  // Shift-end auto-timeout runs server-side (dtr.cron.ts) — no password needed there.
 
   // Helper function to parse duration "HH:mm" to minutes
   function parseDurationToMinutes(duration: string): number {
@@ -872,59 +766,30 @@ export default function PublicClock() {
     return null;
   }, [currentDTR]);
 
-  // Auto-timeout when Trip is Approved
-  const [processedTripApproval, setProcessedTripApproval] = useState(false);
+  // Approved trips close active sessions server-side (updateTripApprovalService).
 
-  // Reset processing flag when user changes
-  useEffect(() => {
-    setProcessedTripApproval(false);
-  }, [foundUserId, ymd]);
-
-  useEffect(() => {
-    // Only trigger if:
-    // 1. We have an approved trip
-    // 2. We have active sessions (isTimeIn)
-    // 3. User ID is identified
-    // 4. We haven't processed this auto-timeout yet
-    // 5. No other mutation is in progress
-    if (approvedTrip && isTimeIn && foundUserId && !processedTripApproval && !isMutating) {
-      const handleTripApprovalTimeout = async () => {
-        setProcessedTripApproval(true);
-        try {
-          // Perform system timeout to close all active sessions
-          await endItem({
-            userId: foundUserId,
-            date: ymd,
-            isSystemTimeout: true
-          });
-
-          setSuccessMessage("Trip Request Approved: All active sessions have been automatically timed out.");
-
-          // Refresh DTR to reflect changes
-          try {
-            const dtrs = await loadDTRsByUserAndDate({
-              kiosk: true,
-              userId: foundUserId,
-              date: ymd,
-            });
-            if (dtrs && dtrs.length > 0) {
-              setCurrentDTR(dtrs[0]);
-            } else {
-              setCurrentDTR(null);
-            }
-          } catch (refreshError) {
-            console.warn("Failed to refresh DTR after auto-timeout", refreshError);
-          }
-        } catch (error) {
-          console.error("Error processing trip approval timeout:", error);
-          // If it failed, maybe we should allow retrying? 
-          // For now, keep it true to avoid infinite error loop
-        }
-      };
-
-      handleTripApprovalTimeout();
+  // Step 2: the password unlocks today's status and the actions.
+  async function verifyPassword() {
+    if (!foundUserId || !password || verifying) return;
+    setVerifying(true);
+    setErrorMessage("");
+    try {
+      const dtrs = await loadDTRsByUserAndDate({
+        kiosk: true,
+        password,
+        userId: foundUserId,
+        date: ymd,
+      });
+      if (dtrs === null) {
+        setVerified(false); // store already showed the reason (wrong password / locked)
+        return;
+      }
+      setCurrentDTR(dtrs[0] ?? null);
+      setVerified(true);
+    } finally {
+      setVerifying(false);
     }
-  }, [approvedTrip, isTimeIn, foundUserId, processedTripApproval, isMutating, endItem, loadDTRsByUserAndDate, ymd]);
+  }
 
   async function handleAction() {
     const trimmedIdNumber = idNumber.trim();
@@ -1095,32 +960,28 @@ export default function PublicClock() {
     const userIdToUse = foundUserId || trimmedIdNumber;
 
     try {
-      // Try to create DTR - this endpoint may require auth but let's try
-      // Try to create DTR - this endpoint may require auth but let's try
-      try {
-        await createDTR({
-          userId: userIdToUse,
-          date: ymd,
-          // Inject security fields
-          website_url: websiteUrl,
-          _hp_check: true
-        } as any);
-      } catch (createError: any) {
-        // If create fails with 401, DTR might already exist or endpoint requires auth
-        // Continue anyway as start/end endpoints might work
-        if (createError?.response?.status !== 401) {
-          throw createError;
-        }
-      }
+      // Ensure today's DTR exists. The store toasts errors (e.g. wrong password)
+      // and returns false — stop here instead of reporting a fake success.
+      const created = await createDTR({
+        userId: userIdToUse,
+        date: ymd,
+        password,
+        // Inject security fields
+        website_url: websiteUrl,
+        _hp_check: true
+      } as any);
+      if (!created) return;
 
       if (selectedAction === "timeout") {
-        await endItem({
+        const ended = await endItem({
           userId: userIdToUse,
           date: ymd,
+          password,
           // Inject security fields
           website_url: websiteUrl,
           _hp_check: true
         } as any);
+        if (!ended) return;
         await syncVirtualOfficeAction(userIdToUse, "timeout");
         setSuccessMessage("Time out recorded.");
         // Refresh DTR status after timeout to update isTimeIn
@@ -1128,6 +989,7 @@ export default function PublicClock() {
           try {
             const dtrs = await loadDTRsByUserAndDate({
               kiosk: true,
+              password,
               userId: foundUserId,
               date: ymd,
             }).catch(() => null);
@@ -1183,8 +1045,9 @@ export default function PublicClock() {
         }
       }
 
-      await startItem({
+      const started = await startItem({
         userId: userIdToUse,
+        password,
         // Inject security fields
         website_url: websiteUrl,
         _hp_check: true,
@@ -1200,6 +1063,7 @@ export default function PublicClock() {
         tripCategory: type === "on trip" ? (tripCategory as "Whole day" | "Half day") : undefined,
         halfDayType: type === "on trip" && tripCategory === "Half day" ? (halfDayType as "First session" | "Second session") : undefined,
       } as any);
+      if (!started) return;
       await syncVirtualOfficeAction(userIdToUse, selectedAction as ActionId);
       setSuccessMessage(
         `Clocked in for ${ACTIONS.find((a) => a.id === selectedAction)?.label ?? "action"
@@ -1211,6 +1075,7 @@ export default function PublicClock() {
         try {
           const dtrs = await loadDTRsByUserAndDate({
             kiosk: true,
+            password,
             userId: foundUserId,
             date: ymd,
           }).catch(() => null);
@@ -1233,12 +1098,18 @@ export default function PublicClock() {
 
   async function handleConfirmCancelTrip() {
     if (!foundUserId) return;
+    if (!verified) {
+      setShowCancelTripModal(false);
+      setErrorMessage("Enter your password first, then cancel the trip.");
+      return;
+    }
 
     try {
       // Per user request: if trip is canceled, it should continue/tag as work (time in)
       const success = await cancelTripRequest({
         userId: foundUserId,
         date: ymd,
+        password,
         convertToWork: true
       });
 
@@ -1249,6 +1120,7 @@ export default function PublicClock() {
         try {
           const dtrs = await loadDTRsByUserAndDate({
             kiosk: true,
+            password,
             userId: foundUserId,
             date: ymd,
           }).catch(() => null);
@@ -1272,6 +1144,8 @@ export default function PublicClock() {
   function resetForm() {
     // Keep idNumber after submission
     setSelectedAction("");
+    setPassword("");
+    setVerified(false); // each clock action needs the password again
     setIssueType("");
     setReason("");
     setTripType("");
@@ -1577,7 +1451,7 @@ export default function PublicClock() {
                       <div>
                         <h4 className="text-sm font-bold text-green-200">Trip Request Approved</h4>
                         <p className="text-xs text-green-300/90 mt-0.5">
-                          Your <span className="font-semibold">{approvedTrip.tripCategory?.toLowerCase()}</span> trip ({approvedTrip.tripType}) has been verified and approved.
+                          Your <span className="font-semibold">{approvedTrip.tripCategory?.toLowerCase()}</span> trip has been verified and approved.
                         </p>
                       </div>
                     </div>
@@ -1607,7 +1481,7 @@ export default function PublicClock() {
 
                     const isArchived = employeeInfo?.archived === true || String(employeeInfo?.archived) === "true";
                     // Determine if action should be disabled
-                    let isDisabled = isMutating || hasSchedule === false || checkingSchedule || isArchived;
+                    let isDisabled = !verified || isMutating || hasSchedule === false || checkingSchedule || isArchived;
 
                     // If user has already timed out for today, disable all actions
                     // Actions will only be available again tomorrow
@@ -1826,6 +1700,50 @@ export default function PublicClock() {
                 )}
               </AnimatePresence>
 
+              {/* Password: proves the person clocking is the account owner */}
+              {idNumber.trim() && foundUserId && (
+                <div>
+                  <label htmlFor="clockPassword" className="mb-1.5 block text-xs sm:text-sm font-semibold text-slate-200">
+                    Password
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      id="clockPassword"
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setVerified(false);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void verifyPassword();
+                        }
+                      }}
+                      disabled={isMutating || verifying}
+                      placeholder="Your HRMS account password"
+                      className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-white placeholder-slate-500 outline-none transition focus:ring-2 focus:ring-blue-400 focus:border-blue-400 disabled:opacity-60"
+                    />
+                    {!verified && (
+                      <button
+                        type="button"
+                        onClick={() => void verifyPassword()}
+                        disabled={!password || verifying}
+                        className="shrink-0 rounded-lg bg-blue-500 px-4 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {verifying ? "Checking…" : "Continue"}
+                      </button>
+                    )}
+                  </div>
+                  {verified && (
+                    <p className="mt-1.5 text-[10px] sm:text-xs font-medium text-green-400">✓ Verified — choose an action</p>
+                  )}
+                </div>
+              )}
+
               {/* Confirm (LoginForm-style primary gradient when actionable) */}
               <div className="pt-1 sm:pt-2">
                 <motion.button
@@ -1835,6 +1753,7 @@ export default function PublicClock() {
                   disabled={
                     !idNumber.trim() ||
                     !selectedAction ||
+                    !verified ||
                     isMutating ||
                     (hasSchedule === false && !isFlexTime) ||
                     checkingSchedule ||
@@ -1865,7 +1784,9 @@ export default function PublicClock() {
                               ? "Already timed out for today"
                               : selectedAction === "work" && !canTimeIn && earliestStartTime
                                 ? "Too early to time in"
-                                : selectedAction
+                                : !verified
+                                  ? "Enter your password to continue"
+                                  : selectedAction
                                   ? `Confirm ${ACTIONS.find((a) => a.id === selectedAction)?.label
                                   }`
                                   : "Select Action"}

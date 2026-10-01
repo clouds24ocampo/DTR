@@ -137,13 +137,14 @@ export const fetchMyDTRByDate = async (
 export const fetchDTRsByUserAndDate = async (payload: {
   userId: string;
   date: string;
-  kiosk?: boolean; // public clock page: no login, today only, reasons stripped
+  kiosk?: boolean; // public clock page: today only, allow-listed fields
+  password?: string; // kiosk reads require the employee's password
 }): Promise<DTRListResponse> => {
   try {
     const body = {
       userId: trimIfString(payload.userId) as string,
       date: trimIfString(payload.date) as string,
-      ...(payload.kiosk ? { kiosk: true } : {}),
+      ...(payload.kiosk ? { kiosk: true, password: payload.password } : {}),
     };
     const { data } = await axiosInstance.post<DTRListResponse>(
       "/api/dtr/filtered",
@@ -185,12 +186,14 @@ export const cancelTrip = async (payload: {
   userId: string;
   date: string;
   convertToWork?: boolean;
+  password?: string;
 }): Promise<{ message: string }> => {
   try {
     const body = {
       userId: trimIfString(payload.userId) as string,
       date: trimIfString(payload.date) as string,
       convertToWork: payload.convertToWork,
+      password: payload.password,
       website_url: "",
       _hp_check: "1",
     };

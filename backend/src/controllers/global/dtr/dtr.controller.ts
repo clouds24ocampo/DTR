@@ -8,6 +8,7 @@ import type {
 import { ServiceError } from "src/utils/global/error";
 import { getUserFromCookie } from "src/utils/global/getCookie";
 import UserModel from "../../../models/workforce/user.model";
+import { assertClockAuth } from "../../../utils/global/clockAuth";
 import {
   createDTRService,
   endDTRItemService,
@@ -25,6 +26,10 @@ import {
  * Otherwise, looks up the user by idNumber and returns their _id
  */
 async function resolveUserId(input: string): Promise<string> {
+  // Request bodies are JSON: reject objects like {"$ne": null} (NoSQL injection).
+  if (typeof input !== "string" || !input.trim()) {
+    throw new ServiceError("A valid employee ID is required.", 400);
+  }
   const objectIdPattern = /^[0-9a-fA-F]{24}$/;
   let user;
 
@@ -72,6 +77,7 @@ export const createDTR = async (req: Request, res: Response) => {
       // Convert idNumber to _id if needed
       body.userId = await resolveUserId(body.userId);
     }
+    await assertClockAuth(req, body.userId as string);
 
     const { message, dtr } = await createDTRService(body);
     return res.status(201).json({ message, dtr });
@@ -106,6 +112,7 @@ export const startDTRItem = async (req: Request, res: Response) => {
       // Convert idNumber to _id if needed
       body.userId = await resolveUserId(body.userId);
     }
+    await assertClockAuth(req, body.userId as string);
 
     const result = await startDTRItemService(body);
     return res.status(200).json(result);
@@ -140,6 +147,7 @@ export const endDTRItem = async (req: Request, res: Response) => {
       // Convert idNumber to _id if needed
       body.userId = await resolveUserId(body.userId);
     }
+    await assertClockAuth(req, body.userId as string);
 
     const result = await endDTRItemService(body);
     return res.status(200).json(result);
@@ -215,21 +223,20 @@ export const getDTRsByDate = async (req: Request, res: Response) => {
  * Body: { userId: string; date: "YYYY-MM-DD" }
  * Explicit user input (no cookie fallback).
  */
-const KIOSK_HIDDEN_FIELDS = ["reason", "tripReason", "tripType", "issue"];
+// Allow-list: the only DTR fields the public clock needs to show today's state.
+const KIOSK_SESSION_FIELDS = ["label", "scheduledStartTime", "scheduledEndTime", "DTRTotalBreak", "DTRTotalMeal"];
+const KIOSK_ENTRY_FIELDS = ["type", "status", "startTime", "endTime", "approvalStatus", "tripCategory", "halfDayType"];
+const pick = (obj: any, keys: string[]) =>
+  Object.fromEntries(keys.filter((k) => obj?.[k] !== undefined).map((k) => [k, obj[k]]));
 
 /** Strip a DTR to what the public clock needs to know the current state. */
 function toKioskDTR(dtr: any) {
   const d = typeof dtr?.toObject === "function" ? dtr.toObject() : dtr;
   return {
-    userId: d.userId,
     date: d.date,
     sessions: (d.sessions ?? []).map((s: any) => ({
-      ...s,
-      fullDTR: (s.fullDTR ?? []).map((item: any) => {
-        const copy = { ...item };
-        for (const f of KIOSK_HIDDEN_FIELDS) delete copy[f];
-        return copy;
-      }),
+      ...pick(s, KIOSK_SESSION_FIELDS),
+      fullDTR: (s.fullDTR ?? []).map((item: any) => pick(item, KIOSK_ENTRY_FIELDS)),
     })),
   };
 }
@@ -242,9 +249,11 @@ export const getDTRsByUserAndDate = async (req: Request, res: Response) => {
       kiosk?: boolean;
     };
 
-    if (!userId)
+    // Strings only: a JSON object here would become a Mongo query operator.
+    if (typeof userId !== "string" || !userId)
       return res.status(400).json({ message: "User ID is required" });
-    if (!date) return res.status(400).json({ message: "Date is required" });
+    if (typeof date !== "string" || !date)
+      return res.status(400).json({ message: "Date is required" });
 
     // (optional) quick YYYY-MM-DD guard
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -252,7 +261,11 @@ export const getDTRsByUserAndDate = async (req: Request, res: Response) => {
     }
 
     if (kiosk) {
-      // Public clock page: around today only, no free-text reasons (health/trip notes).
+      // Public clock page: the employee's own password (or login), today only, allow-listed fields.
+      if (!/^[0-9a-fA-F]{24}$/.test(userId)) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+      await assertClockAuth(req, userId);
       if (Math.abs(Date.parse(`${date}T12:00:00Z`) - Date.now()) > 36 * 3600_000) {
         return res.status(400).json({ message: "Only today's record is available." });
       }
@@ -376,6 +389,8 @@ export const cancelTrip = async (req: Request, res: Response) => {
       // Convert idNumber to _id if needed
       body.userId = await resolveUserId(body.userId);
     }
+    if (!body.userId) return res.status(401).json({ message: "Not authenticated" });
+    await assertClockAuth(req, body.userId as string);
 
     const { cancelTripService } = await import("../../../services/global/dtr/dtr.service");
     const result = await cancelTripService(body as any);

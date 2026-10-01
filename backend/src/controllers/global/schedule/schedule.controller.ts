@@ -15,6 +15,10 @@ import { DEFAULT_FLEX_SESSION, isFlexibleTimePosition } from "src/config/work-po
  * Otherwise, looks up the user by idNumber and returns their _id
  */
 async function resolveUserId(input: string): Promise<string> {
+  // Request bodies are JSON: reject objects like {"$ne": null} (NoSQL injection).
+  if (typeof input !== "string" || !input.trim()) {
+    throw new ServiceError("A valid employee ID is required.", 400);
+  }
   const objectIdPattern = /^[0-9a-fA-F]{24}$/;
   let user;
 
@@ -189,11 +193,11 @@ export const getSchedulesByUserAndDate = async (
     if (!userId)
       return res.status(400).json({ message: "User ID is required" });
 
-    // Convert idNumber to _id if needed
+    // Convert idNumber to _id if needed (rejects non-string / operator objects)
     const resolvedUserId = await resolveUserId(userId);
 
     if (kiosk) {
-      if (!date) return res.status(400).json({ message: "Date is required" });
+      if (typeof date !== "string" || !date) return res.status(400).json({ message: "Date is required" });
       return res.status(200).json({
         message: "Schedules retrieved successfully",
         schedules: await kioskSchedules(resolvedUserId, date),

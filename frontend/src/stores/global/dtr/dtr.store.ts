@@ -53,13 +53,14 @@ export type DTRStoreType = {
     userId: string;
     date: string;
     kiosk?: boolean;
+    password?: string;
   }) => Promise<DTRDocLite[] | null>;
 
   // mutations
   createDTR: (payload: CreateDTRBodyInput) => Promise<boolean>;
   startItem: (payload: StartDTRItemBodyInput) => Promise<boolean>;
   endItem: (payload: EndDTRItemBodyInput) => Promise<boolean>;
-  cancelTripRequest: (payload: { userId: string; date: string; convertToWork?: boolean }) => Promise<boolean>;
+  cancelTripRequest: (payload: { userId: string; date: string; convertToWork?: boolean; password?: string }) => Promise<boolean>;
 
   reset: () => void;
 };
@@ -96,35 +97,10 @@ function pickPayload<T = unknown>(res: any): T {
 }
 
 // Decide best post-mutation refresh
-async function refreshAfterMutation(
-  get: () => DTRStoreType,
-  payload: { userId?: string; date?: string }
-) {
-  const hasDate = !!payload.date;
-  const hasUser = !!payload.userId;
-
-  // Always refresh user history if we have a userId, so stats stay in sync
-  if (hasUser) {
-    get().loadUserDTRs(payload.userId!).catch(console.error);
-  }
-
-  if (hasUser && hasDate) {
-    await get().loadDTRsByUserAndDate({
-      userId: payload.userId!,
-      date: payload.date!,
-    });
-  } else if (hasDate) {
-    // Self-only flows (user inferred via cookie)
-    await get().loadMyDTRByDate(payload.date!);
-  } else {
-    await get().loadAllDTRs();
-  }
-}
-
 // ---- Zustand Store ----
 export const useDTRStore = create(
   persist<DTRStoreType>(
-    (set, get) => ({
+    (set) => ({
       // flags
       loading: false,
       createLoading: false,
@@ -268,12 +244,7 @@ export const useDTRStore = create(
           const res = await handleApiCall(
             set,
             () => createDTRApi(payload),
-            async () => {
-              await refreshAfterMutation(get, {
-                userId: payload.userId,
-                date: payload.date,
-              });
-            },
+            undefined, // clock page refreshes itself (kiosk read needs the password)
             "DTR created.",
             "Failed to create DTR."
           );
@@ -289,12 +260,7 @@ export const useDTRStore = create(
           const res = await handleApiCall(
             set,
             () => startDTRItemApi(payload),
-            async () => {
-              await refreshAfterMutation(get, {
-                userId: payload.userId,
-                date: payload.date,
-              });
-            },
+            undefined, // clock page refreshes itself (kiosk read needs the password)
             "Timer started.",
             "Failed to start DTR item."
           );
@@ -310,12 +276,7 @@ export const useDTRStore = create(
           const res = await handleApiCall(
             set,
             () => endDTRItemApi(payload),
-            async () => {
-              await refreshAfterMutation(get, {
-                userId: payload.userId,
-                date: payload.date,
-              });
-            },
+            undefined, // clock page refreshes itself (kiosk read needs the password)
             "Timer ended.",
             "Failed to end DTR item."
           );
@@ -331,12 +292,7 @@ export const useDTRStore = create(
           const res = await handleApiCall(
             set,
             () => cancelTripApi(payload),
-            async () => {
-              await refreshAfterMutation(get, {
-                userId: payload.userId,
-                date: payload.date,
-              });
-            },
+            undefined, // clock page refreshes itself (kiosk read needs the password)
             payload.convertToWork ? "Converted to time in." : "Trip request cancelled.",
             payload.convertToWork ? "Failed to convert trip." : "Failed to cancel trip."
           );
