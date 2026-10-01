@@ -12,6 +12,7 @@ import {
   Utensils,
   X,
   CheckCircle,
+  ArrowLeft,
 } from "lucide-react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -31,6 +32,7 @@ import { createDeclinedEntry } from "../../api/global/declined-entry/declined-en
 import type { DeclinedActionType } from "../../types/global/declined-entry/declined-entry.type";
 import type { UserType } from "../../types/workforce/user/user.type";
 import { verifyDevice } from "../../api/workplace/device/device.api";
+import { ClockFace, StepLabel, TodayActivity, type Tone } from "./clockUi";
 import axiosInstance from "../../axios/axiosInstance";
 import {
   shouldNotifyForBreak,
@@ -159,14 +161,17 @@ function getCurrentMinutes(): number {
 
 // Color helpers (brand palette)
 const chipStyles: Record<(typeof ACTIONS)[number]["color"], string> = {
-  blue: "bg-blue-600 hover:bg-blue-700 text-white",
-  yellow: "bg-yellow-400 hover:bg-yellow-500 text-black",
-  black: "bg-black hover:bg-neutral-900 text-white",
-  white: "bg-white hover:bg-neutral-100 text-black border border-neutral-200",
-  red: "bg-red-600 hover:bg-red-700 text-white",
+  blue: "bg-blue-500/15 text-blue-300 ring-blue-400/30",
+  yellow: "bg-amber-500/15 text-amber-300 ring-amber-400/30",
+  black: "bg-slate-500/15 text-slate-300 ring-slate-400/25",
+  white: "bg-slate-200/10 text-slate-100 ring-slate-200/25",
+  red: "bg-rose-500/15 text-rose-300 ring-rose-400/30",
 };
 
-const selectedCard = "ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-800";
+const INPUT_CLS =
+  "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base text-white placeholder-slate-500 outline-none transition focus:border-blue-400/70 focus:bg-white/[0.07] focus:ring-2 focus:ring-blue-500/30 disabled:opacity-60";
+
+const selectedCard = "";
 
 // === Break Reminder Utilities ===
 const playBreakReminderSound = () => {
@@ -1157,6 +1162,36 @@ export default function PublicClock() {
   }
 
   // Theme & animation (aligned with LoginForm)
+  // Status label for the clock card.
+  const clockStatus = useMemo((): { label: string; tone: Tone; live: boolean } => {
+    if (!currentDTR) return { label: foundUserId ? "Verify to continue" : "Ready", tone: "slate", live: false };
+    if (hasTimedOut) return { label: "Timed out", tone: "rose", live: false };
+    const away: Record<string, string> = {
+      break: "On break",
+      meal: "On meal",
+      "bio-break": "Bio break",
+      "clinic-break": "Clinic break",
+      "system-issue": "System issue",
+      "on-trip": "On trip",
+    };
+    const off = Object.keys(away).find((id) => activeActions.has(id));
+    if (off) return { label: away[off], tone: "amber", live: true };
+    if (isTimeIn) return { label: "Working", tone: "emerald", live: true };
+    return { label: "Not clocked in", tone: "slate", live: false };
+  }, [currentDTR, foundUserId, hasTimedOut, activeActions, isTimeIn]);
+
+  // Privacy: the clock may be a shared screen. After 2 minutes idle, hide today's
+  // details and require the password again.
+  useEffect(() => {
+    if (!verified && !currentDTR) return;
+    const t = setTimeout(() => {
+      setVerified(false);
+      setPassword("");
+      setCurrentDTR(null);
+    }, 120_000);
+    return () => clearTimeout(t);
+  }, [verified, currentDTR, selectedAction, idNumber]);
+
   const containerVariants = {
     hidden: { opacity: 0, scale: 0.95, y: 20 },
     visible: {
@@ -1180,18 +1215,7 @@ export default function PublicClock() {
   };
 
   return (
-    <div className="h-dvh w-full relative overflow-y-auto bg-gradient-to-br from-black via-blue-950 to-blue-700 flex items-center justify-center py-2 sm:py-4 md:py-6">
-      {/* Back button - Top left corner (LoginForm-style) */}
-      <motion.button
-        onClick={() => navigate("/login")}
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-        className="absolute top-2 left-2 sm:top-4 sm:left-4 z-10 inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-slate-600 bg-slate-800/80 px-2.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm text-white backdrop-blur transition hover:bg-slate-700/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-      >
-        <span>Back</span>
-      </motion.button>
-
+    <div className="relative h-dvh w-full overflow-y-auto bg-slate-950 bg-[radial-gradient(60%_50%_at_15%_0%,rgba(37,99,235,0.30),transparent_70%),radial-gradient(45%_40%_at_100%_100%,rgba(6,182,212,0.16),transparent_70%)]">
       {/* Security Honeypot - Invisible to Humans */}
       <div style={{ opacity: 0, position: 'absolute', top: 0, left: 0, height: 0, width: 0, zIndex: -1, overflow: 'hidden' }}>
         <input
@@ -1246,70 +1270,46 @@ export default function PublicClock() {
 
       {/* Centered container */}
       <motion.div
-        className="w-full max-w-5xl px-3 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-4 md:py-6 relative z-0"
+        className="relative z-0 mx-auto w-full max-w-6xl px-4 py-5 sm:px-6 sm:py-8"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Centered Header */}
-        <motion.header
-          variants={itemVariants}
-          className="mb-3 sm:mb-4 md:mb-6 flex flex-col items-center text-center gap-0.5 sm:gap-1"
-        >
-          <h1 className="text-white text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
-            {COMPANY_NAME}
-          </h1>
-          <p className="text-slate-400 text-xs sm:text-sm">
-            Clock in and out page
-          </p>
+        <motion.header variants={itemVariants} className="mb-6 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </button>
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-bold tracking-tight text-white sm:text-2xl">
+                {COMPANY_NAME || "Attendance"}
+              </h1>
+              <p className="text-xs text-slate-400 sm:text-sm">Time &amp; attendance</p>
+            </div>
+          </div>
         </motion.header>
 
-        {/* Panels */}
-        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-6 md:grid-cols-3">
-          {/* Time Panel (LoginForm left-panel style) */}
-          <motion.section
-            variants={itemVariants}
-            className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-3 sm:p-4 md:p-6 border border-slate-700/50 shadow-2xl shadow-blue-500/20"
-          >
-            {/* Soft glow accent */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 blur-3xl" />
-            </div>
-            <div className="relative flex h-full flex-col items-center justify-center text-center">
-              <div className="rounded-lg px-2 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
-                <span className="font-mono text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white tabular-nums">
-                  {now.toLocaleTimeString()}
-                </span>
-              </div>
-              <div className="mt-1.5 sm:mt-2 md:mt-3 text-slate-300 text-[10px] sm:text-xs md:text-sm">
-                {now.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </div>
-              <div className="mt-2 sm:mt-3 md:mt-4 lg:mt-6 inline-flex items-center gap-1.5 sm:gap-2 rounded-full bg-gradient-to-r from-blue-400/90 to-cyan-400/90 text-white px-2.5 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold shadow-lg shadow-blue-500/30">
-                <span className="inline-block h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-white" />
-                {ymd}
-              </div>
-            </div>
-          </motion.section>
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12 lg:grid-rows-[auto_1fr]">
+          {/* Clock (top-left on desktop, first on mobile) */}
+          <motion.div variants={itemVariants} className="lg:col-span-5 lg:col-start-1 lg:row-start-1">
+            <ClockFace now={now} status={clockStatus} />
+          </motion.div>
 
-          {/* Action & Form Panel (LoginForm right-panel style) */}
+          {/* Right: steps */}
           <motion.section
             variants={itemVariants}
-            className="md:col-span-2 rounded-2xl bg-slate-800/95 p-3 sm:p-4 md:p-6 border border-slate-700/50 shadow-2xl shadow-blue-500/20"
+            className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)] backdrop-blur-xl sm:p-7 lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1"
           >
-            <div className="space-y-3 sm:space-y-4 md:space-y-6">
+            <div className="space-y-6">
               {/* Employee ID Number */}
               <div>
-                <label
-                  htmlFor="idNumber"
-                  className="mb-1.5 sm:mb-2 block text-xs sm:text-sm font-medium text-slate-300"
-                >
-                  Employee ID Number
-                </label>
+                <StepLabel n={1} title="Employee ID" done={Boolean(foundUserId)} hint="Type your employee ID number" />
+                <label htmlFor="idNumber" className="sr-only">Employee ID Number</label>
                 <div className="relative">
                   <input
                     id="idNumber"
@@ -1320,12 +1320,12 @@ export default function PublicClock() {
                     disabled={isMutating}
                     placeholder="Enter Employee ID Number"
                     className={[
-                      "w-full rounded-lg border border-slate-600 bg-slate-700 px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base text-white placeholder-slate-500 outline-none transition focus:ring-2 focus:ring-blue-400 focus:border-blue-400 disabled:opacity-60",
+                      INPUT_CLS,
                       (idNumber || checkingSchedule) && "pr-16 sm:pr-20",
                       hasSchedule === false
-                        ? "border-red-500/70 focus:ring-red-400/50"
+                        ? "!border-red-400/60 focus:!ring-red-400/30"
                         : hasSchedule === true
-                          ? "border-green-500/50 focus:ring-green-400/50"
+                          ? "!border-emerald-400/50 focus:!ring-emerald-400/30"
                           : "",
                     ].join(" ")}
                   />
@@ -1373,7 +1373,7 @@ export default function PublicClock() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="rounded-lg border border-slate-600 bg-slate-700/80 p-3 sm:p-4"
+                    className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
                   >
                     <div className="flex items-start gap-3 sm:gap-4">
                       {/* Profile Picture */}
@@ -1459,21 +1459,59 @@ export default function PublicClock() {
                 )}
               </AnimatePresence>
 
-              {/* Actions */}
+              {/* Step 2: password proves the person clocking is the account owner */}
+              {idNumber.trim() && foundUserId && (
+                <div>
+                  <StepLabel n={2} title="Verify it's you" done={verified} hint={verified ? "Verified" : "Enter your HRMS account password"} />
+                  <label htmlFor="clockPassword" className="sr-only">Password</label>
+                  <div className="flex gap-2">
+                    <input
+                      id="clockPassword"
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setVerified(false);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          void verifyPassword();
+                        }
+                      }}
+                      disabled={isMutating || verifying}
+                      placeholder="Your HRMS account password"
+                      className={INPUT_CLS}
+                    />
+                    {!verified && (
+                      <button
+                        type="button"
+                        onClick={() => void verifyPassword()}
+                        disabled={!password || verifying}
+                        className="shrink-0 rounded-xl bg-blue-500 px-5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {verifying ? "Checking…" : "Continue"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: actions */}
               <div>
                 <div className="flex items-center justify-between mb-2 sm:mb-3">
-                  <label className="text-xs sm:text-sm font-medium text-slate-300">
-                    Select Action
-                  </label>
+                  <StepLabel n={3} title="Choose an action" hint={verified ? "Pick what you want to record" : "Verify your password to unlock"} />
                   <button
                     type="button"
                     onClick={() => navigate("/coming-soon")}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-500 bg-slate-700/50 px-2 py-1 text-xs font-small text-slate-300 transition hover:border-slate-400 hover:bg-slate-700/80 sm:px-3 sm:py-1.5 sm:text-xs"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-300 transition hover:bg-white/10"
                   >
                     Virtual Office
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-1.5 sm:gap-2 md:gap-3 sm:grid-cols-3">
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3">
                   {ACTIONS.map((action) => {
                     const Icon = action.icon;
                     const active = selectedAction === action.id;
@@ -1557,25 +1595,25 @@ export default function PublicClock() {
                         }}
                         disabled={isDisabled}
                         className={[
-                          "group relative flex items-center gap-1.5 sm:gap-2 md:gap-3 rounded-lg border-2 p-1.5 sm:p-2 md:p-3 text-left transition",
+                          "group relative flex items-center gap-3 rounded-2xl border p-3 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60",
                           active
-                            ? "border-blue-400 bg-slate-700/80"
-                            : "border-slate-600 hover:border-slate-500 bg-slate-700/50",
+                            ? "border-blue-400/70 bg-blue-500/10 shadow-[0_8px_24px_-10px_rgba(59,130,246,0.55)]"
+                            : "border-white/10 bg-white/[0.03] hover:border-white/25 hover:bg-white/[0.06]",
                           active ? selectedCard : "",
-                          isDisabled ? "opacity-50 cursor-not-allowed" : "",
+                          isDisabled ? "opacity-40 cursor-not-allowed" : "",
                         ].join(" ")}
                       >
                         <span
                           className={[
-                            "inline-flex h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 items-center justify-center rounded-lg sm:rounded-lg flex-shrink-0",
+                            "inline-flex h-10 w-10 items-center justify-center rounded-xl ring-1 ring-inset flex-shrink-0",
                             chipStyles[action.color],
                             "transition",
-                            isCurrentlyActive ? "ring-2 ring-green-500 ring-offset-1 sm:ring-offset-2" : "",
+                            isCurrentlyActive ? "!ring-2 !ring-emerald-400" : "",
                           ].join(" ")}
                         >
-                          <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
+                          <Icon className="h-5 w-5" />
                         </span>
-                        <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-slate-200">
+                        <span className="text-sm font-semibold text-slate-100">
                           {action.id === "on-trip"
                             ? (pendingTrip ? "Pending Approval" : isCurrentlyActive ? "Return from Trip" : action.label)
                             : action.label}
@@ -1670,7 +1708,7 @@ export default function PublicClock() {
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
                         disabled={isMutating}
-                        className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base text-white placeholder-slate-500 outline-none transition focus:ring-2 focus:ring-blue-400 focus:border-blue-400 disabled:opacity-60"
+                        className={INPUT_CLS}
                       />
                     </div>
                   </motion.div>
@@ -1694,55 +1732,11 @@ export default function PublicClock() {
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       disabled={isMutating}
-                      className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base text-white placeholder-slate-500 outline-none transition focus:ring-2 focus:ring-blue-400 focus:border-blue-400 disabled:opacity-60"
+                      className={INPUT_CLS}
                     />
                   </motion.div>
                 )}
               </AnimatePresence>
-
-              {/* Password: proves the person clocking is the account owner */}
-              {idNumber.trim() && foundUserId && (
-                <div>
-                  <label htmlFor="clockPassword" className="mb-1.5 block text-xs sm:text-sm font-semibold text-slate-200">
-                    Password
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      id="clockPassword"
-                      name="password"
-                      type="password"
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setVerified(false);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          void verifyPassword();
-                        }
-                      }}
-                      disabled={isMutating || verifying}
-                      placeholder="Your HRMS account password"
-                      className="w-full rounded-lg border border-slate-600 bg-slate-700 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base text-white placeholder-slate-500 outline-none transition focus:ring-2 focus:ring-blue-400 focus:border-blue-400 disabled:opacity-60"
-                    />
-                    {!verified && (
-                      <button
-                        type="button"
-                        onClick={() => void verifyPassword()}
-                        disabled={!password || verifying}
-                        className="shrink-0 rounded-lg bg-blue-500 px-4 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {verifying ? "Checking…" : "Continue"}
-                      </button>
-                    )}
-                  </div>
-                  {verified && (
-                    <p className="mt-1.5 text-[10px] sm:text-xs font-medium text-green-400">✓ Verified — choose an action</p>
-                  )}
-                </div>
-              )}
 
               {/* Confirm (LoginForm-style primary gradient when actionable) */}
               <div className="pt-1 sm:pt-2">
@@ -1764,10 +1758,10 @@ export default function PublicClock() {
                     (selectedAction === "work" && !canTimeIn)
                   }
                   className={[
-                    "w-full rounded-lg px-3 sm:px-4 md:px-6 py-2.5 sm:py-3 md:py-4 text-sm sm:text-base md:text-lg font-bold shadow-lg transition disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-blue-400",
+                    "w-full rounded-2xl px-6 py-4 text-base font-bold transition disabled:cursor-not-allowed disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
                     selectedAction
-                      ? "text-white bg-gradient-to-r from-blue-400 to-cyan-400 shadow-lg shadow-blue-500/50 hover:from-blue-500 hover:to-cyan-500"
-                      : "bg-slate-600 text-slate-400",
+                      ? "text-white bg-gradient-to-r from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/30 hover:from-blue-400 hover:to-cyan-400"
+                      : "bg-white/10 text-slate-400",
                   ].join(" ")}
                 >
                   {isMutating
@@ -1794,6 +1788,11 @@ export default function PublicClock() {
               </div>
             </div>
           </motion.section>
+
+          {/* Today's activity (below the form on mobile, under the clock on desktop) */}
+          <motion.div variants={itemVariants} className="lg:col-span-5 lg:col-start-1 lg:row-start-2">
+            <TodayActivity dtr={currentDTR} now={now} timedOut={hasTimedOut} />
+          </motion.div>
         </div>
       </motion.div>
       <SuccessModal

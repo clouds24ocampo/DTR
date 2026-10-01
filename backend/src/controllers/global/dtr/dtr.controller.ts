@@ -224,8 +224,8 @@ export const getDTRsByDate = async (req: Request, res: Response) => {
  * Explicit user input (no cookie fallback).
  */
 // Allow-list: the only DTR fields the public clock needs to show today's state.
-const KIOSK_SESSION_FIELDS = ["label", "scheduledStartTime", "scheduledEndTime", "DTRTotalBreak", "DTRTotalMeal"];
-const KIOSK_ENTRY_FIELDS = ["type", "status", "startTime", "endTime", "approvalStatus", "tripCategory", "halfDayType"];
+const KIOSK_SESSION_FIELDS = ["label", "scheduledStartTime", "scheduledEndTime", "DTRTotalWork", "DTRTotalBreak", "DTRTotalMeal"];
+const KIOSK_ENTRY_FIELDS = ["type", "status", "startTime", "endTime", "startTag", "endTag", "duration", "approvalStatus", "tripCategory", "halfDayType"];
 const pick = (obj: any, keys: string[]) =>
   Object.fromEntries(keys.filter((k) => obj?.[k] !== undefined).map((k) => [k, obj[k]]));
 
