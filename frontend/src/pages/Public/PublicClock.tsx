@@ -373,6 +373,7 @@ export default function PublicClock() {
           // Load DTR to check current status
           try {
             const dtrs = await loadDTRsByUserAndDate({
+              kiosk: true,
               userId: userId,
               date: ymd,
             }).catch((error) => {
@@ -674,6 +675,7 @@ export default function PublicClock() {
             );
             // Refresh
             return loadDTRsByUserAndDate({
+              kiosk: true,
               userId: foundUserId,
               date: ymd,
             }).catch(() => null);
@@ -901,6 +903,7 @@ export default function PublicClock() {
           // Refresh DTR to reflect changes
           try {
             const dtrs = await loadDTRsByUserAndDate({
+              kiosk: true,
               userId: foundUserId,
               date: ymd,
             });
@@ -1124,6 +1127,7 @@ export default function PublicClock() {
         if (foundUserId) {
           try {
             const dtrs = await loadDTRsByUserAndDate({
+              kiosk: true,
               userId: foundUserId,
               date: ymd,
             }).catch(() => null);
@@ -1206,6 +1210,7 @@ export default function PublicClock() {
       if (foundUserId) {
         try {
           const dtrs = await loadDTRsByUserAndDate({
+            kiosk: true,
             userId: foundUserId,
             date: ymd,
           }).catch(() => null);
@@ -1243,6 +1248,7 @@ export default function PublicClock() {
         // Refresh local DTR state
         try {
           const dtrs = await loadDTRsByUserAndDate({
+            kiosk: true,
             userId: foundUserId,
             date: ymd,
           }).catch(() => null);

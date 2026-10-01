@@ -215,9 +215,32 @@ export const getDTRsByDate = async (req: Request, res: Response) => {
  * Body: { userId: string; date: "YYYY-MM-DD" }
  * Explicit user input (no cookie fallback).
  */
+const KIOSK_HIDDEN_FIELDS = ["reason", "tripReason", "tripType", "issue"];
+
+/** Strip a DTR to what the public clock needs to know the current state. */
+function toKioskDTR(dtr: any) {
+  const d = typeof dtr?.toObject === "function" ? dtr.toObject() : dtr;
+  return {
+    userId: d.userId,
+    date: d.date,
+    sessions: (d.sessions ?? []).map((s: any) => ({
+      ...s,
+      fullDTR: (s.fullDTR ?? []).map((item: any) => {
+        const copy = { ...item };
+        for (const f of KIOSK_HIDDEN_FIELDS) delete copy[f];
+        return copy;
+      }),
+    })),
+  };
+}
+
 export const getDTRsByUserAndDate = async (req: Request, res: Response) => {
   try {
-    const { userId, date } = req.body as { userId?: string; date?: string };
+    const { userId, date, kiosk } = req.body as {
+      userId?: string;
+      date?: string;
+      kiosk?: boolean;
+    };
 
     if (!userId)
       return res.status(400).json({ message: "User ID is required" });
@@ -226,6 +249,18 @@ export const getDTRsByUserAndDate = async (req: Request, res: Response) => {
     // (optional) quick YYYY-MM-DD guard
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return res.status(400).json({ message: "Date must be YYYY-MM-DD" });
+    }
+
+    if (kiosk) {
+      // Public clock page: around today only, no free-text reasons (health/trip notes).
+      if (Math.abs(Date.parse(`${date}T12:00:00Z`) - Date.now()) > 36 * 3600_000) {
+        return res.status(400).json({ message: "Only today's record is available." });
+      }
+      const dtrs = await getDTRsByUserAndDateService(userId, date);
+      return res.status(200).json({
+        message: "DTRs retrieved successfully",
+        dtrs: dtrs.map(toKioskDTR),
+      });
     }
 
     const dtrs = await getDTRsByUserAndDateService(userId, date);

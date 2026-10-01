@@ -52,6 +52,7 @@ export type DTRStoreType = {
   loadDTRsByUserAndDate: (payload: {
     userId: string;
     date: string;
+    kiosk?: boolean;
   }) => Promise<DTRDocLite[] | null>;
 
   // mutations

@@ -137,11 +137,13 @@ export const fetchMyDTRByDate = async (
 export const fetchDTRsByUserAndDate = async (payload: {
   userId: string;
   date: string;
+  kiosk?: boolean; // public clock page: no login, today only, reasons stripped
 }): Promise<DTRListResponse> => {
   try {
     const body = {
       userId: trimIfString(payload.userId) as string,
       date: trimIfString(payload.date) as string,
+      ...(payload.kiosk ? { kiosk: true } : {}),
     };
     const { data } = await axiosInstance.post<DTRListResponse>(
       "/api/dtr/filtered",

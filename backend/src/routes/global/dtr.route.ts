@@ -1,3 +1,4 @@
+import { rateLimit } from "src/middleware/rateLimit";
 import express from "express";
 import protectRoute from "src/middleware/protectedRoute";
 import {
@@ -36,7 +37,13 @@ router.get("/date/:date", protectRoute, getDTRsByDate);
 
 router.get("/me/date/:date", protectRoute, getMyDTRByDate);
 
-router.post("/filtered", protectRoute, getDTRsByUserAndDate);
+// Clock page (kiosk: true) is public: today only, reasons stripped. Everything else needs login.
+router.post(
+  "/filtered",
+  rateLimit(60, 60_000),
+  (req, res, next) => (req.body?.kiosk === true ? next() : protectRoute(req, res, next)),
+  getDTRsByUserAndDate
+);
 
 router.get("/trips/pending", protectRoute, getPendingTripApprovals);
 
