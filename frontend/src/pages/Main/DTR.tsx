@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import DTRDetails from "../../components/workforce/dtr/DTRDetails";
+import DTRRecordsTable from "../../components/workforce/dtr/DTRRecordsTable";
 import DTRStats, { DTRStat } from "../../components/workforce/dtr/DTRStats";
 import { useDTRStore } from "../../stores/global/dtr/dtr.store";
 import { useUserStore } from "../../stores/workforce/user/user.store";
@@ -260,6 +261,13 @@ export default function DTR() {
         </motion.div>
       )}
 
+      {/* Month at a glance: click a row to open that day */}
+      {user && (
+        <motion.div variants={itemVariants}>
+          <DTRRecordsTable dtrs={userDTRs} selectedDate={selectedDate} onSelect={setSelectedDate} />
+        </motion.div>
+      )}
+
       {/* DTR panel */}
       <motion.div className="w-full" variants={itemVariants}>
         <motion.div
@@ -294,103 +302,13 @@ export default function DTR() {
                     <ChevronLeft className="w-4 h-4 text-slate-500" />
                   </button>
 
-                  <div className="flex gap-2">
-                    {/* Year Dropdown */}
-                    <select
-                      id="dtrYear"
-                      value={year}
-                      onChange={(e) => {
-                        const newYear = parseInt(e.target.value);
-                        const newDay = Math.min(
-                          day,
-                          new Date(newYear, month, 0).getDate()
-                        );
-                        setSelectedDate(
-                          `${newYear}-${String(month).padStart(2, "0")}-${String(
-                            newDay
-                          ).padStart(2, "0")}`
-                        );
-                      }}
-                      className="px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm bg-white"
-                    >
-                      {Array.from({ length: 5 }, (_, i) => {
-                        const y = new Date().getFullYear() - 2 + i;
-                        return (
-                          <option key={y} value={y}>
-                            {y}
-                          </option>
-                        );
-                      })}
-                    </select>
-
-                    {/* Month Dropdown */}
-                    <select
-                      id="dtrMonth"
-                      value={month}
-                      onChange={(e) => {
-                        const newMonth = parseInt(e.target.value);
-                        const newDay = Math.min(
-                          day,
-                          new Date(year, newMonth, 0).getDate()
-                        );
-                        setSelectedDate(
-                          `${year}-${String(newMonth).padStart(
-                            2,
-                            "0"
-                          )}-${String(newDay).padStart(2, "0")}`
-                        );
-                      }}
-                      className="px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm bg-white"
-                    >
-                      {Array.from({ length: 12 }, (_, i) => {
-                        const monthNum = i + 1;
-                        const monthNames = [
-                          "Jan",
-                          "Feb",
-                          "Mar",
-                          "Apr",
-                          "May",
-                          "Jun",
-                          "Jul",
-                          "Aug",
-                          "Sep",
-                          "Oct",
-                          "Nov",
-                          "Dec"
-                        ];
-                        return (
-                          <option key={monthNum} value={monthNum}>
-                            {monthNames[i]}
-                          </option>
-                        );
-                      })}
-                    </select>
-
-                    {/* Day Dropdown */}
-                    <select
-                      id="dtrDay"
-                      value={day}
-                      onChange={(e) => {
-                        const newDay = parseInt(e.target.value);
-                        setSelectedDate(
-                          `${year}-${String(month).padStart(
-                            2,
-                            "0"
-                          )}-${String(newDay).padStart(2, "0")}`
-                        );
-                      }}
-                      className="px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm bg-white"
-                    >
-                      {Array.from({ length: daysInMonth }, (_, i) => {
-                        const dayNum = i + 1;
-                        return (
-                          <option key={dayNum} value={dayNum}>
-                            {String(dayNum).padStart(2, "0")}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    max={new Date().toISOString().split("T")[0]}
+                    onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+                    className="px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+                  />
 
                   <button
                     onClick={goToNextDay}

@@ -2,6 +2,7 @@
 import { Clock, ChevronLeft, ChevronRight, Download, TrendingUp, AlertCircle, Timer, UserCheck, MapPin } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import DTRRecordsTable from "../../../components/workforce/dtr/DTRRecordsTable";
 import DTRDetails from "../../../components/workforce/dtr/DTRDetails";
 import EmployeesPanel from "../../../components/workforce/dtr/EmployeesPanel";
 import DTRStats, { DTRStat } from "../../../components/workforce/dtr/DTRStats";
@@ -392,7 +393,10 @@ export default function DTRTracking() {
         </motion.div>
 
         {/* Right Panel (DTR Details) */}
-        <motion.div className="w-full lg:flex-1 min-w-0 flex flex-col" variants={itemVariants}>
+        <motion.div className="w-full lg:flex-1 min-w-0 flex flex-col gap-4" variants={itemVariants}>
+          {selectedEmployee && (
+            <DTRRecordsTable dtrs={userDTRs} selectedDate={selectedDate} onSelect={setSelectedDate} />
+          )}
           <motion.div
             className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] flex flex-col flex-1 min-h-0"
             variants={itemVariants}
@@ -425,79 +429,13 @@ export default function DTRTracking() {
                         <ChevronLeft className="w-4 h-4 text-slate-500" />
                       </button>
 
-                      <div className="flex gap-1 sm:gap-2 flex-1 sm:flex-initial">
-                        {/* Year Dropdown */}
-                        <select
-                          id="dtrYear"
-                          value={year}
-                          onChange={(e) => {
-                            const newYear = parseInt(e.target.value);
-                            const newDay = Math.min(day, new Date(newYear, month, 0).getDate());
-                            setSelectedDate(
-                              `${newYear}-${String(month).padStart(2, "0")}-${String(newDay).padStart(2, "0")}`
-                            );
-                          }}
-                          className="flex-1 sm:flex-initial px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm min-w-0 bg-white text-slate-700"
-                        >
-                          {Array.from({ length: 5 }, (_, i) => {
-                            const y = new Date().getFullYear() - 2 + i;
-                            return (
-                              <option key={y} value={y}>
-                                {y}
-                              </option>
-                            );
-                          })}
-                        </select>
-
-                        {/* Month Dropdown */}
-                        <select
-                          id="dtrMonth"
-                          value={month}
-                          onChange={(e) => {
-                            const newMonth = parseInt(e.target.value);
-                            const newDay = Math.min(day, new Date(year, newMonth, 0).getDate());
-                            setSelectedDate(
-                              `${year}-${String(newMonth).padStart(2, "0")}-${String(newDay).padStart(2, "0")}`
-                            );
-                          }}
-                          className="flex-1 sm:flex-initial px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm min-w-0 bg-white text-slate-700"
-                        >
-                          {Array.from({ length: 12 }, (_, i) => {
-                            const monthNum = i + 1;
-                            const monthNames = [
-                              "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                              "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-                            ];
-                            return (
-                              <option key={monthNum} value={monthNum}>
-                                {monthNames[i]}
-                              </option>
-                            );
-                          })}
-                        </select>
-
-                        {/* Day Dropdown */}
-                        <select
-                          id="dtrDay"
-                          value={day}
-                          onChange={(e) => {
-                            const newDay = parseInt(e.target.value);
-                            setSelectedDate(
-                              `${year}-${String(month).padStart(2, "0")}-${String(newDay).padStart(2, "0")}`
-                            );
-                          }}
-                          className="flex-1 sm:flex-initial px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm min-w-0 bg-white text-slate-700"
-                        >
-                          {Array.from({ length: daysInMonth }, (_, i) => {
-                            const dayNum = i + 1;
-                            return (
-                              <option key={dayNum} value={dayNum}>
-                                {String(dayNum).padStart(2, "0")}
-                              </option>
-                            );
-                          })}
-                        </select>
-                      </div>
+                      <input
+                        type="date"
+                        value={selectedDate}
+                        max={getLocalDateString(new Date())}
+                        onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+                        className="flex-1 sm:flex-initial px-2 sm:px-3 py-1.5 sm:py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm min-w-0 bg-white text-slate-700"
+                      />
 
                       <button
                         onClick={goToNextDay}
