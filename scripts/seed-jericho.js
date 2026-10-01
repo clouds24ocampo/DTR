@@ -15,7 +15,7 @@ db.users.updateOne(
       idNumber: "QC-2026-0002",
       email: "jericho.zaleta@quantumcloud.com",
       position: ["Software Developer"],
-      salary: 35000,
+      salary: 15000,
       salaryType: "monthly",
       archived: false,
       gender: "Male",

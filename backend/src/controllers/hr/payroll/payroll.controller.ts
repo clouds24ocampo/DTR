@@ -60,8 +60,8 @@ export const getPayrolls = async (req: Request, res: Response) => {
             start.setUTCHours(0, 0, 0, 0);
             const end = new Date(query.endDate as string);
             end.setUTCHours(23, 59, 59, 999);
-            filter.periodStart = { $gte: start };
-            filter.periodEnd = { $lte: end };
+            filter.periodStart = { $lte: end };
+            filter.periodEnd = { $gte: start };
         }
         
         const payrolls = await PayrollService.getPayrolls(filter);

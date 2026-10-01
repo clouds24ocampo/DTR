@@ -15,7 +15,7 @@ db.users.updateOne(
       idNumber: "QC-2026-0001",
       email: "adrian.boncodin@quantumcloud.com",
       position: ["Software Developer"],
-      salary: 35000,
+      salary: 25000,
       salaryType: "monthly",
       archived: false,
       gender: "Male",
