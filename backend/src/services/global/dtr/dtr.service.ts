@@ -364,18 +364,22 @@ function applyDurationAndTotals(
 export async function createDTRService(input: CreateDTRBodyInput): Promise<{
   message: string;
   dtr: DTRDocLite;
+  created: boolean;
 }> {
   const { userId } = input;
   const targetDate = normalizeDate(input.date);
 
   if (!userId) throw new ServiceError("userId is required", 400);
 
+  // Idempotent: the clock calls create before every action (time-in, break,
+  // time-out), so an existing record is the normal case — not an error.
   const existingDTR = await DTR.findOne({ userId, date: targetDate });
   if (existingDTR) {
-    throw new ServiceError(
-      "DTR already exists for this user on the given date.",
-      400
-    );
+    return {
+      message: "DTR already exists.",
+      dtr: existingDTR as unknown as DTRDocLite,
+      created: false,
+    };
   }
 
   const { scheduleDoc } = await ensureScheduleForUser(userId, targetDate);
@@ -388,7 +392,11 @@ export async function createDTRService(input: CreateDTRBodyInput): Promise<{
   );
 
   assertNotNull(dtr, "Failed to create DTR document");
-  return { message: "DTR created.", dtr: dtr as unknown as DTRDocLite };
+  return {
+    message: "DTR created.",
+    dtr: dtr as unknown as DTRDocLite,
+    created: true,
+  };
 }
 
 /* ------------------------------ START ITEM ------------------------------ */

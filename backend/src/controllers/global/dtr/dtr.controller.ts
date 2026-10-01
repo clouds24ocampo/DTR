@@ -79,8 +79,8 @@ export const createDTR = async (req: Request, res: Response) => {
     }
     await assertClockAuth(req, body.userId as string);
 
-    const { message, dtr } = await createDTRService(body);
-    return res.status(201).json({ message, dtr });
+    const { message, dtr, created } = await createDTRService(body);
+    return res.status(created ? 201 : 200).json({ message, dtr });
   } catch (err) {
     if (err instanceof ServiceError) {
       return res.status(err.status).json({ message: err.message });
