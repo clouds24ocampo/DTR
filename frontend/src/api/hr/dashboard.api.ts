@@ -4,7 +4,7 @@ import { AxiosError } from "axios";
 // Function to fetch all applicants
 export const fetchApplicants = async () => {
   try {
-    const response = await axiosInstance.get("api/applications/applicants");
+    const response = await axiosInstance.get("/api/applications/applicants");
     return response;
   } catch (error: unknown) {
     if (error instanceof AxiosError) {
@@ -22,7 +22,7 @@ export const fetchApplicants = async () => {
 export const fetchApplicantsPerCategory = async (token: string) => {
   try {
     const response = await axiosInstance.get(
-      "api/categories/applicants-per-category",
+      "/api/categories/applicants-per-category",
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -45,7 +45,7 @@ export const fetchApplicantsPerCategory = async (token: string) => {
 
 export const fetchJobsByCategory = async (token: string, category: string) => {
   try {
-    const response = await axiosInstance.get(`api/jobs?category=${category}`, {
+    const response = await axiosInstance.get(`/api/jobs?category=${category}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

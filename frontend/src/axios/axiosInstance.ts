@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
-const baseURL = import.meta.env.VITE_API_URL;
+const rawBaseURL = import.meta.env.VITE_API_URL?.trim();
+const baseURL = rawBaseURL ? rawBaseURL.replace(/\/+$/, "") : "";
 
 const axiosInstance = axios.create({
   baseURL: baseURL,
@@ -10,8 +11,13 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// Add request interceptor to attach Bearer token if present
+// Add request interceptor to attach Bearer token and normalize relative URLs
 axiosInstance.interceptors.request.use((config) => {
+  // Ensure URLs never resolve relative to nested frontend routes (e.g. /hr/api/users)
+  if (config.url && !config.url.startsWith("http://") && !config.url.startsWith("https://") && !config.url.startsWith("/")) {
+    config.url = `/${config.url}`;
+  }
+
   try {
     const token = localStorage.getItem("auth-token");
     if (token) {

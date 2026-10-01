@@ -153,16 +153,18 @@ const FloatingBreakStats: React.FC<FloatingBreakStatsProps> = ({
   } | null>(null);
 
   const stats = useMemo<BreakStats>(() => {
-    const activeEmployees = otherUsers?.filter((u) => !u.archived) || [];
-    const activeUserIds = dtrs.map((d) => d.userId);
+    const safeOtherUsers = Array.isArray(otherUsers) ? otherUsers : [];
+    const safeDtrs = Array.isArray(dtrs) ? dtrs : [];
+    const activeEmployees = safeOtherUsers.filter((u) => u && !u.archived);
+    const activeUserIds = safeDtrs.map((d) => d.userId);
     const absentUsers = activeEmployees
       .filter((u) => !activeUserIds.includes(u._id))
       .map((u) => ({ userId: u._id }));
 
     const newStats: BreakStats = {
-      present: dtrs.map((d) => ({
+      present: safeDtrs.map((d) => ({
         userId: d.userId,
-        startTime: d.sessions[0]?.fullDTR[0]?.startTime,
+        startTime: d.sessions?.[0]?.fullDTR?.[0]?.startTime,
       })),
       absent: absentUsers,
       break: [],
@@ -180,10 +182,11 @@ const FloatingBreakStats: React.FC<FloatingBreakStatsProps> = ({
       return Math.max(0, now.diff(start, "minutes"));
     };
 
-    dtrs.forEach((dtr) => {
+    safeDtrs.forEach((dtr) => {
+      if (!dtr || !Array.isArray(dtr.sessions)) return;
       // Find the latest session and entry
       const lastSession = dtr.sessions[dtr.sessions.length - 1];
-      if (!lastSession) return;
+      if (!lastSession || !Array.isArray(lastSession.fullDTR)) return;
 
       const lastEntry = lastSession.fullDTR[lastSession.fullDTR.length - 1];
       if (!lastEntry) return;

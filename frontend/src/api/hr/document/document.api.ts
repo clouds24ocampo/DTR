@@ -26,7 +26,7 @@ export const sendDocumentDataToApi = async (
 
 export const fetchDocuments = async () => {
   try {
-    const response = await axiosInstance.get("api/document/all-documents");
+    const response = await axiosInstance.get("/api/document/all-documents");
     return response;
   } catch (error: unknown) {
     if (error instanceof AxiosError) {

@@ -72,6 +72,14 @@ function pickPayload<T = unknown>(res: any): T {
   return (res?.data ?? res) as T;
 }
 
+function extractUserList(raw: any): UserType[] {
+  const payload = raw?.data ?? raw;
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.users)) return payload.users;
+  if (Array.isArray(payload?.employees)) return payload.employees;
+  return [];
+}
+
 export const useUserStore = create(
   persist<UserStoreState>(
     (set, get) => ({
@@ -121,11 +129,11 @@ export const useUserStore = create(
         const res = await handleApiCall(
           set,
           fetchOtherUsersApi,
-          (data) => set({ otherUsers: pickPayload<UserType[]>(data) }),
+          (data) => set({ otherUsers: extractUserList(data) }),
           undefined,
           "Failed to fetch users."
         );
-        return res ? pickPayload<UserType[]>(res) : null;
+        return res ? extractUserList(res) : null;
       },
 
       fetchDTRFor: async (id: string) => {

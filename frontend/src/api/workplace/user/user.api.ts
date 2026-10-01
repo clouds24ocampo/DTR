@@ -7,13 +7,13 @@ import { uploadFileInChunks } from "../../../utils/global/chunkUploader";
 // if axiosInstance.baseURL === '/api'
 export const fetchOtherUsers = async () => {
   try {
-    const { data } = await axiosInstance.get("api/users", {
+    const { data } = await axiosInstance.get("/api/users", {
       headers: { "Cache-Control": "no-cache" },
     });
     return data;
   } catch (err: any) {
     if (err?.response?.status === 304) {
-      const { data } = await axiosInstance.get("api/users", {
+      const { data } = await axiosInstance.get("/api/users", {
         params: { t: Date.now() },
       });
       return data;
@@ -28,7 +28,7 @@ export const fetchOtherUsers = async () => {
 
 export const fetchDTR = async (id: string) => {
   try {
-    const response = await axiosInstance.get(`api/dtr/all/${id}`);
+    const response = await axiosInstance.get(`/api/dtr/all/${id}`);
     return response;
   } catch (error: unknown) {
     return handleError(error);
@@ -46,7 +46,7 @@ export const fetchOwnDTR = async () => {
 
 export const fetchSchedule = async () => {
   try {
-    const response = await axiosInstance.get("api/schedule");
+    const response = await axiosInstance.get("/api/schedule");
     return response;
   } catch (error: unknown) {
     return handleError(error);
@@ -55,7 +55,7 @@ export const fetchSchedule = async () => {
 
 export const fetchUserDetails = async () => {
   try {
-    const response = await axiosInstance.get("api/users/profile/me");
+    const response = await axiosInstance.get("/api/users/profile/me");
     return response;
   } catch (error: unknown) {
     // Don't throw error for 401 - it's expected when not authenticated
@@ -139,7 +139,7 @@ export const updateUserProfile = async (
       });
     }
 
-    const response = await axiosInstance.put(`api/users/profile/${userId}`, formData);
+    const response = await axiosInstance.put(`/api/users/profile/${userId}`, formData);
     return response.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -148,7 +148,7 @@ export const updateUserProfile = async (
 
 export const switchUserRole = async (role: string) => {
   try {
-    const response = await axiosInstance.put("api/users/switch-role", { role });
+    const response = await axiosInstance.put("/api/users/switch-role", { role });
     return response.data;
   } catch (error: unknown) {
     return handleError(error);

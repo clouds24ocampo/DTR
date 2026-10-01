@@ -154,105 +154,134 @@ export default function PayrollAnalytics() {
     }, [safeDepartments]);
 
     // Filter payrolls by department if selected
+    const safePayrolls: any[] = useMemo(() => {
+        const raw: any = payrolls as any;
+        if (Array.isArray(raw)) return raw;
+        if (Array.isArray(raw?.payrolls)) return raw.payrolls;
+        if (Array.isArray(raw?.data)) return raw.data;
+        if (Array.isArray(raw?.items)) return raw.items;
+        return [];
+    }, [payrolls]);
+
     const filteredPayrolls = useMemo(() => {
-        if (!selectedDepartment) return payrolls;
-        return payrolls.filter(p => {
-            const empId = typeof p.employee === 'string' ? p.employee : p.employee._id;
-            return userDeptMap.get(empId) === selectedDepartment;
+        if (!selectedDepartment) return safePayrolls;
+        return safePayrolls.filter(p => {
+            if (!p) return false;
+            const empId = typeof p.employee === 'string' ? p.employee : p.employee?._id;
+            return empId ? userDeptMap.get(empId) === selectedDepartment : false;
         });
-    }, [payrolls, selectedDepartment, userDeptMap]);
+    }, [safePayrolls, selectedDepartment, userDeptMap]);
 
     // Analytics Calculations
     const analytics = useMemo(() => {
-        const totalGrossPay = filteredPayrolls.reduce((sum, p) => sum + p.grossPay, 0);
-        const totalNetPay = filteredPayrolls.reduce((sum, p) => sum + p.netPay, 0);
+        const totalGrossPay = filteredPayrolls.reduce((sum, p) => sum + (Number(p?.grossPay) || 0), 0);
+        const totalNetPay = filteredPayrolls.reduce((sum, p) => sum + (Number(p?.netPay) || 0), 0);
         const totalDeductions = totalGrossPay - totalNetPay;
-        const totalLateDeductions = filteredPayrolls.reduce((sum, p) => sum + p.lateDeductionAmount, 0);
-        const totalRegularHours = filteredPayrolls.reduce((sum, p) => sum + p.regularHours, 0);
-        const totalOvertimeHours = filteredPayrolls.reduce((sum, p) => sum + p.overtimeHours, 0);
-        const totalLateCount = filteredPayrolls.reduce((sum, p) => sum + p.lateCount, 0);
-        const totalLateHours = filteredPayrolls.reduce((sum, p) => sum + (p.lateHours || 0), 0);
+        const totalLateDeductions = filteredPayrolls.reduce((sum, p) => sum + (Number(p?.lateDeductionAmount) || 0), 0);
+        const totalRegularHours = filteredPayrolls.reduce((sum, p) => sum + (Number(p?.regularHours) || 0), 0);
+        const totalOvertimeHours = filteredPayrolls.reduce((sum, p) => sum + (Number(p?.overtimeHours) || 0), 0);
+        const totalLateCount = filteredPayrolls.reduce((sum, p) => sum + (Number(p?.lateCount) || 0), 0);
+        const totalLateHours = filteredPayrolls.reduce((sum, p) => sum + (Number(p?.lateHours) || 0), 0);
 
         const avgGrossPay = filteredPayrolls.length > 0 ? totalGrossPay / filteredPayrolls.length : 0;
         const avgNetPay = filteredPayrolls.length > 0 ? totalNetPay / filteredPayrolls.length : 0;
         const avgHourlyRate = filteredPayrolls.length > 0
-            ? filteredPayrolls.reduce((sum, p) => sum + p.hourlyRate, 0) / filteredPayrolls.length
+            ? filteredPayrolls.reduce((sum, p) => sum + (Number(p?.hourlyRate) || 0), 0) / filteredPayrolls.length
             : 0;
 
         // Status breakdown
         const statusBreakdown = {
-            draft: filteredPayrolls.filter(p => p.status === 'draft').length,
-            finalized: filteredPayrolls.filter(p => p.status === 'finalized').length,
-            paid: filteredPayrolls.filter(p => p.status === 'paid').length,
+            draft: filteredPayrolls.filter(p => p?.status === 'draft').length,
+            finalized: filteredPayrolls.filter(p => p?.status === 'finalized').length,
+            paid: filteredPayrolls.filter(p => p?.status === 'paid').length,
         };
 
         // Department breakdown
         const deptBreakdown = safeDepartments.map(dept => {
             const deptPayrolls = filteredPayrolls.filter(p => {
-                const empId = typeof p.employee === 'string' ? p.employee : p.employee._id;
-                return userDeptMap.get(empId) === dept._id;
+                if (!p) return false;
+                const empId = typeof p.employee === 'string' ? p.employee : p.employee?._id;
+                return empId ? userDeptMap.get(empId) === dept._id : false;
             });
+            const deptGross = deptPayrolls.reduce((sum, p) => sum + (Number(p?.grossPay) || 0), 0);
             return {
                 name: dept.name,
                 count: deptPayrolls.length,
-                totalGross: deptPayrolls.reduce((sum, p) => sum + p.grossPay, 0),
-                totalNet: deptPayrolls.reduce((sum, p) => sum + p.netPay, 0),
-                avgGross: deptPayrolls.length > 0 ? deptPayrolls.reduce((sum, p) => sum + p.grossPay, 0) / deptPayrolls.length : 0,
-                totalOT: deptPayrolls.reduce((sum, p) => sum + p.overtimeHours, 0),
-                totalLate: deptPayrolls.reduce((sum, p) => sum + p.lateCount, 0),
+                totalGross: deptGross,
+                totalNet: deptPayrolls.reduce((sum, p) => sum + (Number(p?.netPay) || 0), 0),
+                avgGross: deptPayrolls.length > 0 ? deptGross / deptPayrolls.length : 0,
+                totalOT: deptPayrolls.reduce((sum, p) => sum + (Number(p?.overtimeHours) || 0), 0),
+                totalLate: deptPayrolls.reduce((sum, p) => sum + (Number(p?.lateCount) || 0), 0),
             };
         }).filter(d => d.count > 0);
 
         // Top earners
         const topEarners = [...filteredPayrolls]
-            .sort((a, b) => b.grossPay - a.grossPay)
+            .sort((a, b) => (Number(b?.grossPay) || 0) - (Number(a?.grossPay) || 0))
             .slice(0, 10)
             .map(p => ({
-                name: typeof p.employee === 'string' ? 'Unknown' : `${p.employee.firstName} ${p.employee.lastName}`,
-                grossPay: p.grossPay,
-                netPay: p.netPay,
-                overtimeHours: p.overtimeHours,
+                name: typeof p?.employee === 'string'
+                    ? 'Unknown'
+                    : p?.employee?.firstName && p?.employee?.lastName
+                    ? `${p.employee.firstName} ${p.employee.lastName}`
+                    : p?.employee?.firstName || p?.employee?.lastName || 'Unknown',
+                grossPay: Number(p?.grossPay) || 0,
+                netPay: Number(p?.netPay) || 0,
+                overtimeHours: Number(p?.overtimeHours) || 0,
             }));
 
         // Employees with most overtime
         const topOvertime = [...filteredPayrolls]
-            .sort((a, b) => b.overtimeHours - a.overtimeHours)
+            .sort((a, b) => (Number(b?.overtimeHours) || 0) - (Number(a?.overtimeHours) || 0))
             .slice(0, 10)
             .map(p => ({
-                name: typeof p.employee === 'string' ? 'Unknown' : `${p.employee.firstName} ${p.employee.lastName}`,
-                overtimeHours: p.overtimeHours,
-                grossPay: p.grossPay,
+                name: typeof p?.employee === 'string'
+                    ? 'Unknown'
+                    : p?.employee?.firstName && p?.employee?.lastName
+                    ? `${p.employee.firstName} ${p.employee.lastName}`
+                    : p?.employee?.firstName || p?.employee?.lastName || 'Unknown',
+                overtimeHours: Number(p?.overtimeHours) || 0,
+                grossPay: Number(p?.grossPay) || 0,
             }));
 
         // Employees with most lates
         const topLates = [...filteredPayrolls]
-            .sort((a, b) => b.lateCount - a.lateCount)
+            .sort((a, b) => (Number(b?.lateCount) || 0) - (Number(a?.lateCount) || 0))
             .slice(0, 10)
             .map(p => ({
-                name: typeof p.employee === 'string' ? 'Unknown' : `${p.employee.firstName} ${p.employee.lastName}`,
-                lateCount: p.lateCount,
-                lateHours: p.lateHours || 0,
-                lateDeduction: p.lateDeductionAmount,
+                name: typeof p?.employee === 'string'
+                    ? 'Unknown'
+                    : p?.employee?.firstName && p?.employee?.lastName
+                    ? `${p.employee.firstName} ${p.employee.lastName}`
+                    : p?.employee?.firstName || p?.employee?.lastName || 'Unknown',
+                lateCount: Number(p?.lateCount) || 0,
+                lateHours: Number(p?.lateHours) || 0,
+                lateDeduction: Number(p?.lateDeductionAmount) || 0,
             }));
 
         // Monthly trend (if we have multiple months)
         const monthlyTrend = filteredPayrolls.reduce((acc: any[], p) => {
+            if (!p?.periodStart) return acc;
             const month = moment(p.periodStart).format('MMM YYYY');
             const existing = acc.find(item => item.month === month);
+            const gross = Number(p.grossPay) || 0;
+            const net = Number(p.netPay) || 0;
+            const ot = Number(p.overtimeHours) || 0;
+            const late = Number(p.lateCount) || 0;
             if (existing) {
-                existing.grossPay += p.grossPay;
-                existing.netPay += p.netPay;
+                existing.grossPay += gross;
+                existing.netPay += net;
                 existing.count += 1;
-                existing.overtimeHours += p.overtimeHours;
-                existing.lateCount += p.lateCount;
+                existing.overtimeHours += ot;
+                existing.lateCount += late;
             } else {
                 acc.push({
                     month,
-                    grossPay: p.grossPay,
-                    netPay: p.netPay,
+                    grossPay: gross,
+                    netPay: net,
                     count: 1,
-                    overtimeHours: p.overtimeHours,
-                    lateCount: p.lateCount,
+                    overtimeHours: ot,
+                    lateCount: late,
                 });
             }
             return acc;

@@ -7,7 +7,7 @@ const router = express.Router();
 
 // Apply authentication middleware to all routes
 router.use(protectRoute);
-router.use(authMiddleware(["HR", "Operations Manager", "Admin"]));
+router.use(authMiddleware(["HR", "Operation Manager", "Operations Manager", "Admin", "Super Admin"]));
 
 router.post("/calculate", PayrollController.calculatePayroll);
 router.get("/", PayrollController.getPayrolls);

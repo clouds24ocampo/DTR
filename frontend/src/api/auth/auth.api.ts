@@ -1,7 +1,7 @@
 import axiosInstance from "../../axios/axiosInstance";
 
 export const loginApi = async (email: string, password: string) => {
-  const response = await axiosInstance.post("api/auth/login", {
+  const response = await axiosInstance.post("/api/auth/login", {
     email,
     password,
   });
@@ -9,19 +9,19 @@ export const loginApi = async (email: string, password: string) => {
 };
 
 export const logoutApi = async () => {
-  const response = await axiosInstance.post("api/auth/logout");
+  const response = await axiosInstance.post("/api/auth/logout");
   return response;
 };
 
 export const requestPasswordResetPinApi = async (email: string) => {
-  const response = await axiosInstance.post("api/auth/forgot-password/request-pin", {
+  const response = await axiosInstance.post("/api/auth/forgot-password/request-pin", {
     email,
   });
   return response;
 };
 
 export const verifyPasswordResetPinApi = async (email: string, pin: string) => {
-  const response = await axiosInstance.post("api/auth/forgot-password/verify-pin", {
+  const response = await axiosInstance.post("/api/auth/forgot-password/verify-pin", {
     email,
     pin,
   });
@@ -29,7 +29,7 @@ export const verifyPasswordResetPinApi = async (email: string, pin: string) => {
 };
 
 export const resetPasswordApi = async (email: string, pin: string, newPassword: string) => {
-  const response = await axiosInstance.post("api/auth/forgot-password/reset", {
+  const response = await axiosInstance.post("/api/auth/forgot-password/reset", {
     email,
     pin,
     newPassword,
@@ -44,6 +44,6 @@ export const registerSuperAdminApi = async (data: {
   lastName: string;
   username?: string;
 }) => {
-  const response = await axiosInstance.post("api/auth/register-admin", data);
+  const response = await axiosInstance.post("/api/auth/register-admin", data);
   return response;
 };

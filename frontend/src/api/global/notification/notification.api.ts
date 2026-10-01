@@ -10,7 +10,7 @@ export const getNotificationsApi = async (params?: {
   if (params?.unreadOnly) queryParams.append("unreadOnly", "true");
 
   const queryString = queryParams.toString();
-  const url = `api/notifications${queryString ? `?${queryString}` : ""}`;
+  const url = `/api/notifications${queryString ? `?${queryString}` : ""}`;
   
   const response = await axiosInstance.get<{ success: boolean; data: INotification[] }>(url);
   return response;
@@ -18,14 +18,14 @@ export const getNotificationsApi = async (params?: {
 
 export const getUnreadCountApi = async () => {
   const response = await axiosInstance.get<{ success: boolean; data: UnreadCountResponse }>(
-    "api/notifications/unread-count"
+    "/api/notifications/unread-count"
   );
   return response;
 };
 
 export const createNotificationApi = async (payload: CreateNotificationDTO) => {
   const response = await axiosInstance.post<{ success: boolean; data: INotification }>(
-    "api/notifications/create",
+    "/api/notifications/create",
     payload
   );
   return response;
@@ -33,21 +33,21 @@ export const createNotificationApi = async (payload: CreateNotificationDTO) => {
 
 export const markNotificationAsReadApi = async (notificationId: string) => {
   const response = await axiosInstance.patch<{ success: boolean; data: INotification }>(
-    `api/notifications/${notificationId}/read`
+    `/api/notifications/${notificationId}/read`
   );
   return response;
 };
 
 export const markAllNotificationsAsReadApi = async () => {
   const response = await axiosInstance.patch<{ success: boolean; data: { count: number } }>(
-    "api/notifications/mark-all-read"
+    "/api/notifications/mark-all-read"
   );
   return response;
 };
 
 export const deleteNotificationApi = async (notificationId: string) => {
   const response = await axiosInstance.delete<{ success: boolean; message: string }>(
-    `api/notifications/${notificationId}`
+    `/api/notifications/${notificationId}`
   );
   return response;
 };

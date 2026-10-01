@@ -102,9 +102,10 @@ export default function MyPayroll() {
     // Derived Data
     const sortedPayrolls = useMemo(() => {
         if (!user?._id) return [];
-        return payrolls
+        const safePayrolls = Array.isArray(payrolls) ? payrolls : [];
+        return safePayrolls
             .filter(p => {
-                if (!p.employee) return false;
+                if (!p || !p.employee) return false;
                 const empId = typeof p.employee === 'string' ? p.employee : p.employee._id;
                 return empId === user._id;
             })

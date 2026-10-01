@@ -39,3 +39,6 @@ Thumbs.db
 
 # local secrets
 .env.docker
+
+# Tool analysis and cache
+graphify-out/

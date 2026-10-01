@@ -11,7 +11,7 @@ import { uploadFileInChunks } from "../../../utils/global/chunkUploader";
 // user accounts for messaging
 export const fetchMessengerUsers = async () => {
   try {
-    const response = await axiosInstance.get("api/messaging/all-user");
+    const response = await axiosInstance.get("/api/messaging/all-user");
     return response;
   } catch (error: unknown) {
     if (error instanceof AxiosError) {
@@ -45,7 +45,7 @@ export const createMessengerAccount = async (
 // conversation api section
 export const fetchConversations = async () => {
   try {
-    const response = await axiosInstance.get("api/messaging/all-conversations");
+    const response = await axiosInstance.get("/api/messaging/all-conversations");
     return response;
   } catch (error: unknown) {
     if (error instanceof AxiosError) {
@@ -78,7 +78,7 @@ export const createConversationx = async (
 // message api section
 export const fetchMessages = async () => {
   try {
-    const response = await axiosInstance.get("api/messaging/all-messages");
+    const response = await axiosInstance.get("/api/messaging/all-messages");
     return response;
   } catch (error: unknown) {
     if (error instanceof AxiosError) {

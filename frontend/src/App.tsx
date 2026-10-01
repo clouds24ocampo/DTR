@@ -61,6 +61,7 @@ function App() {
     {
       path: "/",
       element: <IsAuthenticated />,
+      errorElement: <Error500 />,
       children: [
         { path: "/", element: <DefaultDashboardRedirect /> },
         { path: "/hr-dashboard", element: <HrDashboard /> },
@@ -214,6 +215,7 @@ function App() {
     {
       path: "/",
       element: <IsUnAuthenticated />,
+      errorElement: <Error500 />,
       children: [
         {
           path: "/login",

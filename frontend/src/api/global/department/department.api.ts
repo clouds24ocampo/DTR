@@ -6,7 +6,7 @@ import {
   UpdateDepartmentBodyInput,
 } from "../../../types/workforce/department/department.type";
 
-const BASE = "api/departments";
+const BASE = "/api/departments";
 
 // tiny helpers to unwrap payloads that may be wrapped by { message, ... }
 const pickList = (data: any): DepartmentDoc[] =>

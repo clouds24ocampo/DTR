@@ -10,7 +10,7 @@ import {
   WorkplaceDayView,
 } from "../../types/workforce/workplace/workplace.type";
 
-const BASE = "api/workplaces";
+const BASE = "/api/workplaces";
 
 // --- helpers
 const toStringArray = (val: unknown): string[] => {

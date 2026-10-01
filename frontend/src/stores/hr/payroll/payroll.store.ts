@@ -12,6 +12,14 @@ interface PayrollStore {
   deletePayroll: (id: string) => Promise<void>;
 }
 
+const extractPayrollList = (raw: any): Payroll[] => {
+  const payload = raw?.data ?? raw;
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.payrolls)) return payload.payrolls;
+  if (Array.isArray(payload?.items)) return payload.items;
+  return [];
+};
+
 export const usePayrollStore = create<PayrollStore>((set) => ({
   payrolls: [],
   loading: false,
@@ -32,9 +40,10 @@ export const usePayrollStore = create<PayrollStore>((set) => ({
     set({ loading: true });
     try {
       const payrolls = await getPayrolls({ employeeId, startDate, endDate });
-      set({ payrolls });
+      set({ payrolls: extractPayrollList(payrolls) });
     } catch (error: any) {
-        toast.error(error.response?.data?.message || "Failed to fetch payrolls");
+      toast.error(error.response?.data?.message || "Failed to fetch payrolls");
+      set((state) => ({ payrolls: Array.isArray(state.payrolls) ? state.payrolls : [] }));
     } finally {
       set({ loading: false });
     }

@@ -9,7 +9,7 @@ import type {
   ISession,
 } from "../../../types/global/schedule/schedule.type";
 
-const BASE = "api/schedule";
+const BASE = "/api/schedule";
 
 function unwrapArray(maybe: any): any[] {
   if (Array.isArray(maybe)) return maybe;

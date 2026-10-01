@@ -4,7 +4,7 @@ import { handleError } from "../../../axios/errorHandler";
 
 export const registerDevice = async (userId: string) => {
     try {
-        const response = await axiosInstance.post("api/device/register", { userId });
+        const response = await axiosInstance.post("/api/device/register", { userId });
         return response.data;
     } catch (error: unknown) {
         return handleError(error);
@@ -13,7 +13,7 @@ export const registerDevice = async (userId: string) => {
 
 export const verifyDevice = async (userId: string, token: string) => {
     try {
-        const response = await axiosInstance.post("api/device/verify", { userId, token });
+        const response = await axiosInstance.post("/api/device/verify", { userId, token });
         return response.data;
     } catch (error: unknown) {
         // If verification fails, we don't necessarily want to trigger a global error

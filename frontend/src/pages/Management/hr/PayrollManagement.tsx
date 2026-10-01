@@ -140,15 +140,17 @@ export default function PayrollManagement() {
 
     // Filtering
     const filteredPayrolls = useMemo(() => {
-        return payrolls.filter(p => {
+        const safePayrolls = Array.isArray(payrolls) ? payrolls : [];
+        return safePayrolls.filter(p => {
+            if (!p) return false;
             const emp: any = p.employee;
-            const empName = `${emp.firstName} ${emp.lastName}`.toLowerCase();
-            const matchesSearch = empName.includes(searchTerm.toLowerCase());
+            const empName = emp ? `${emp.firstName || ''} ${emp.lastName || ''}`.trim().toLowerCase() : '';
+            const matchesSearch = !searchTerm || empName.includes(searchTerm.toLowerCase());
 
             // For department, we need to find the employee's department
             // If p.employee is populated, it might not have department. We use allEmployees lookup or the map directly
-            const empId = typeof p.employee === 'string' ? p.employee : p.employee._id;
-            const empDeptId = userDeptMap.get(empId);
+            const empId = typeof p.employee === 'string' ? p.employee : p.employee?._id;
+            const empDeptId = empId ? userDeptMap.get(empId) : undefined;
             const matchesDept = !selectedDepartment || empDeptId === selectedDepartment;
 
             const matchesStatus = !selectedStatus || p.status === selectedStatus;

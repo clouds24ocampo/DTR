@@ -8,7 +8,7 @@ import type {
   UpdateReportDTO,
 } from "../../../types/global/report/report.types";
 
-const BASE = "api/report";
+const BASE = "/api/report";
 
 /**
  * Transform a report object from backend format (_id) to frontend format (id)
