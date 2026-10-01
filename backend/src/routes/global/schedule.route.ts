@@ -1,3 +1,4 @@
+import { rateLimit } from "src/middleware/rateLimit";
 import express from "express";
 import {
   createSchedulesForUsers,
@@ -47,8 +48,13 @@ router.get(
 // Any authenticated user can view their own schedule
 router.get("/me/date/:date", protectRoute, getMySchedulesByDate);
 
+// Clock page (kiosk: true) is public and returns minimal fields; every other
+// use (HR screens, date ranges, full schedule docs) requires login.
+// ponytail: 60/min per IP, sized for a shared office network at shift change; tighten if abused.
 router.post(
   "/filtered",
+  rateLimit(60, 60_000),
+  (req, res, next) => (req.body?.kiosk === true ? next() : protectRoute(req, res, next)),
   getSchedulesByUserAndDate
 );
 

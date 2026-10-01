@@ -1218,21 +1218,6 @@ export default function PublicClock() {
           // Silently fail DTR refresh
           console.warn("Could not refresh DTR status:", dtrError);
         }
-        // Flexible-time first clock-in provisions the shift server-side — pull it in.
-        if (isFlexTime && !userSchedule?._id) {
-          try {
-            const refreshed = await fetchSchedulesFiltered({
-              userId: foundUserId,
-              date: ymd,
-            }).catch(() => null);
-            if (refreshed && refreshed.length > 0) {
-              setUserSchedule(refreshed[0]);
-              setHasSchedule(true);
-            }
-          } catch {
-            // Non-fatal: break/meal gating already allows flex staff.
-          }
-        }
       }
       resetForm();
     } catch (error: any) {
@@ -1536,7 +1521,7 @@ export default function PublicClock() {
                         </h3>
                         <div className="mt-1 space-y-0.5 sm:space-y-1">
                           <p className="text-[10px] sm:text-xs text-slate-300">
-                            <span className="font-semibold">ID:</span> {employeeInfo.idNumber}
+                            <span className="font-semibold">ID:</span> {idNumber.trim()}
                           </p>
                           <p className="text-[10px] sm:text-xs text-slate-300">
                             <span className="font-semibold">Position:</span> {employeeInfo.position}

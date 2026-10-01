@@ -55,6 +55,8 @@ import workplaceRoute from "./routes/workforce/workplace.route";
 import payrollRoute from "./routes/hr/payroll/payroll.route";
 
 const app = express();
+// Behind host nginx -> container nginx: trust both hops so req.ip (rate limits) is the real client.
+app.set("trust proxy", 2);
 const PORT = process.env.PORT || 9001;
 
 // Configure CORS

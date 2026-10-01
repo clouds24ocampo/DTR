@@ -143,6 +143,36 @@ export const getSchedulesByDate = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Public clock-page lookup (no login). Returns only what the clock needs to run
+ * and to let a person confirm "this is me": schedule sessions, the flexible-time
+ * flag, first name + last initial, position, and whether the account is inactive.
+ * No photo, full name, contact, location, department, pay or schedule metadata.
+ */
+async function kioskSchedules(userId: string, date: string) {
+  const user = (await UserModel.findById(userId)
+    .select("firstName lastName position archived")
+    .lean()) as
+    | { firstName?: string; lastName?: string; position?: unknown; archived?: boolean }
+    | null;
+  if (!user) return [];
+
+  const flexible = isFlexibleTimePosition(user.position);
+  const employee = {
+    firstName: user.firstName ?? "",
+    lastName: user.lastName ? `${user.lastName.charAt(0)}.` : "",
+    position: user.position,
+    archived: Boolean(user.archived),
+  };
+  const found = await getSchedulesByUserAndDateService(userId, date);
+  const sessions = found.length
+    ? found.map((s) => (s as any).toObject().sessions)
+    : flexible
+      ? [[{ ...DEFAULT_FLEX_SESSION }]] // preview only; first clock-in persists it
+      : [];
+  return sessions.map((sessionList) => ({ userId, date, sessions: sessionList, flexible, employee }));
+}
+
 export const getSchedulesByUserAndDate = async (
   req: Request,
   res: Response
@@ -161,6 +191,14 @@ export const getSchedulesByUserAndDate = async (
 
     // Convert idNumber to _id if needed
     const resolvedUserId = await resolveUserId(userId);
+
+    if (kiosk) {
+      if (!date) return res.status(400).json({ message: "Date is required" });
+      return res.status(200).json({
+        message: "Schedules retrieved successfully",
+        schedules: await kioskSchedules(resolvedUserId, date),
+      });
+    }
 
     // Date range: return schedules in [startDate, endDate]
     if (startDate && endDate) {
@@ -184,28 +222,9 @@ export const getSchedulesByUserAndDate = async (
     const found = await getSchedulesByUserAndDateService(resolvedUserId, date);
     console.log(`[getSchedulesByUserAndDate] Found ${found.length} schedule(s) for userId: "${resolvedUserId}", date: "${date}"`);
 
-    // Tell the client whether this user is flexible-time (developers/IT).
-    // Kiosk callers also get the fields the clock card shows (no salary/email).
-    const user = await UserModel.findById(resolvedUserId)
-      .select(
-        kiosk
-          ? "firstName middleName lastName idNumber position profilePicture archived location workInfo"
-          : "position"
-      )
-      .lean();
+    const user = await UserModel.findById(resolvedUserId).select("position").lean();
     const flexible = isFlexibleTimePosition((user as { position?: unknown } | null)?.position);
-    const extra = kiosk ? { flexible, employee: user } : { flexible };
-    const schedules: unknown[] = found.map((s) => ({ ...(s as any).toObject(), ...extra }));
-    if (flexible && kiosk && schedules.length === 0) {
-      // Not persisted: the first clock-in creates the real shift (ensureScheduleForUser).
-      schedules.push({
-        userId: resolvedUserId,
-        date,
-        teamName: "Flexible",
-        sessions: [{ ...DEFAULT_FLEX_SESSION }],
-        ...extra,
-      });
-    }
+    const schedules = found.map((s) => ({ ...(s as any).toObject(), flexible }));
 
     return res
       .status(200)
