@@ -137,8 +137,8 @@ export default function Report() {
           icon={FileText}
           tint="blue"
           eyebrow="Workplace"
-          title="Submission Registry"
-          subtitle="Track your workplace reports, incident logs, and resolution progress from your personal administrative dashboard."
+          title="My Reports"
+          subtitle="Submit workplace reports and follow how they are resolved."
           actions={
             <motion.button
               whileHover={{ y: -2 }}
@@ -164,7 +164,7 @@ export default function Report() {
         className="space-y-4"
         variants={itemVariants}
       >
-        <SectionHeader icon={ClipboardList} title="Personnel History" />
+        <SectionHeader icon={ClipboardList} title="My reports" />
 
         <div className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <MyReportList reports={myReports} loading={loading} onEdit={openEdit} />

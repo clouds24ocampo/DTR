@@ -23,36 +23,36 @@ export default function LeaveSummaryCards({ leaves }: Props) {
   const summaryData = [
     {
       id: "pending",
-      label: "Awaiting Review",
+      label: "Pending",
       count: counts.pending,
-      sublabel: "Active Requests",
+      sublabel: "Waiting for a decision",
       icon: Clock,
       color: "amber",
       gradient: "from-amber-500 to-orange-500"
     },
     {
       id: "approved",
-      label: "Validated",
+      label: "Approved",
       count: counts.approved,
-      sublabel: "Confirmed Leaves",
+      sublabel: "Leave granted",
       icon: CheckCircle2,
       color: "emerald",
       gradient: "from-emerald-500 to-teal-500"
     },
     {
       id: "rejected",
-      label: "Not Approved",
+      label: "Declined",
       count: counts.rejected,
-      sublabel: "Dismissed Filings",
+      sublabel: "Not granted",
       icon: XCircle,
       color: "rose",
       gradient: "from-rose-500 to-red-600"
     },
     {
       id: "canceled",
-      label: "Archived",
+      label: "Cancelled",
       count: counts.canceled,
-      sublabel: "Revoked Records",
+      sublabel: "Withdrawn by you",
       icon: MinusCircle,
       color: "slate",
       gradient: "from-slate-500 to-slate-700"

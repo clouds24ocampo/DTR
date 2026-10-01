@@ -100,8 +100,8 @@ export default function Leave() {
           icon={CalendarClock}
           tint="blue"
           eyebrow="Time Off"
-          title="Absence Management"
-          subtitle="Track your leave requests, vacation schedule, and approval history from your personal administrative dashboard."
+          title="My Leave"
+          subtitle="File leave requests and follow their approval status."
           actions={
             <motion.button
               whileHover={{ y: -2 }}
@@ -132,7 +132,7 @@ export default function Leave() {
         className="space-y-4"
         variants={itemVariants}
       >
-        <SectionHeader icon={ClipboardList} title="Personal Filing History" />
+        <SectionHeader icon={ClipboardList} title="My requests" />
 
         <div className="rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           {loading ? (
@@ -140,7 +140,7 @@ export default function Leave() {
               <div className="inline-flex items-center justify-center p-4 bg-blue-50 rounded-xl mb-4">
                 <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
               </div>
-              <p className="text-slate-600 font-bold tracking-tight">Syncing with leave registry...</p>
+              <p className="text-slate-600 font-bold tracking-tight">Loading your leave requests…</p>
             </div>
           ) : (
             <MyLeaveList

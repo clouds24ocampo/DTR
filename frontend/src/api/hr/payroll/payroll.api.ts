@@ -11,6 +11,11 @@ export const getPayrolls = async (params: GetPayrollsPayload) => {
   return response.data;
 };
 
+export const getMyPayrolls = async (params: { startDate?: string; endDate?: string }) => {
+  const response = await axiosInstance.get<Payroll[]>("/api/payroll/me", { params });
+  return response.data;
+};
+
 export const updatePayroll = async (id: string, updates: Partial<Payroll>) => {
     const response = await axiosInstance.put<Payroll>(`/api/payroll/${id}`, updates);
     return response.data;

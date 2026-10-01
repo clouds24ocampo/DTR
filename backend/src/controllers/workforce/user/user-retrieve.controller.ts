@@ -3,7 +3,7 @@ import UserModel from "../../../models/workforce/user.model";
 import { getUserFromCookie } from "../../../utils/global/getCookie";
 import { ServiceError } from "../../../utils/global/error";
 
-const PAY_VIEWERS = ["hr", "workforce", "operations manager"];
+const PAY_VIEWERS = ["hr", "workforce", "operation manager", "operations manager"];
 
 export const getAllEmployees = async (
   req: Request & { account?: { position?: unknown } },

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { calculatePayroll, getPayrolls, updatePayroll, deletePayroll } from "../../../api/hr/payroll/payroll.api";
+import { calculatePayroll, getPayrolls, getMyPayrolls, updatePayroll, deletePayroll } from "../../../api/hr/payroll/payroll.api";
 import { Payroll } from "../../../types/hr/payroll/payroll.type";
 import toast from "react-hot-toast";
 
@@ -8,6 +8,7 @@ interface PayrollStore {
   loading: boolean;
   calculatePayroll: (userId: string, startDate: string, endDate: string) => Promise<void>;
   fetchPayrolls: (employeeId?: string, startDate?: string, endDate?: string) => Promise<void>;
+  fetchMyPayrolls: (startDate?: string, endDate?: string) => Promise<void>;
   updatePayroll: (id: string, updates: Partial<Payroll>) => Promise<void>;
   deletePayroll: (id: string) => Promise<void>;
 }
@@ -44,6 +45,18 @@ export const usePayrollStore = create<PayrollStore>((set) => ({
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Failed to fetch payrolls");
       set((state) => ({ payrolls: Array.isArray(state.payrolls) ? state.payrolls : [] }));
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  fetchMyPayrolls: async (startDate, endDate) => {
+    set({ loading: true });
+    try {
+      set({ payrolls: extractPayrollList(await getMyPayrolls({ startDate, endDate })) });
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Failed to fetch your payslips");
+      set({ payrolls: [] });
     } finally {
       set({ loading: false });
     }

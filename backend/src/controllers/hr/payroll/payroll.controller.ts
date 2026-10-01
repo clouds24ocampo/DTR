@@ -50,6 +50,29 @@ export const deletePayroll = async (req: Request, res: Response) => {
     }
 };
 
+/** GET /api/payroll/me - the caller's own payslips; drafts stay hidden until HR finalizes them. */
+export const getMyPayrolls = async (req: Request, res: Response) => {
+    try {
+        const accountId = (req as Request & { account?: { _id?: unknown } }).account?._id;
+        if (!accountId) return res.status(401).json({ message: "Unauthorized" });
+
+        const filter: any = { employee: accountId, status: { $in: ["finalized", "paid"] } };
+        const { startDate, endDate } = req.query;
+        if (typeof startDate === "string" && typeof endDate === "string") {
+            const start = new Date(startDate);
+            start.setUTCHours(0, 0, 0, 0);
+            const end = new Date(endDate);
+            end.setUTCHours(23, 59, 59, 999);
+            filter.periodStart = { $lte: end };
+            filter.periodEnd = { $gte: start };
+        }
+        return res.status(200).json(await PayrollService.getPayrolls(filter));
+    } catch (error: any) {
+        console.error("getMyPayrolls error:", error);
+        return res.status(500).json({ message: "Failed to fetch payrolls" });
+    }
+};
+
 export const getPayrolls = async (req: Request, res: Response) => {
     try {
         const query = req.query;

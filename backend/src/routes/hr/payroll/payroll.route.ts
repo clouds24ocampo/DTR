@@ -7,6 +7,9 @@ const router = express.Router();
 
 // Apply authentication middleware to all routes
 router.use(protectRoute);
+// Any signed-in employee: their own finalized/paid payslips only.
+router.get("/me", PayrollController.getMyPayrolls);
+
 router.use(authMiddleware(["HR", "Operation Manager", "Operations Manager", "Admin", "Super Admin"]));
 
 router.post("/calculate", PayrollController.calculatePayroll);

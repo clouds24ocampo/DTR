@@ -104,7 +104,7 @@ export default function MyReportList({ reports, loading, onEdit }: Props) {
 
           <div className="flex items-center gap-2">
             <div className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm border border-blue-100">
-              {filteredReports.length} Historical Records
+              {filteredReports.length} Reports
             </div>
           </div>
         </div>
@@ -117,7 +117,7 @@ export default function MyReportList({ reports, loading, onEdit }: Props) {
             <div className="inline-flex items-center justify-center p-4 bg-blue-50 rounded-lg mb-4">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
             </div>
-            <p className="text-slate-600 font-bold tracking-tight">Syncing with registry...</p>
+            <p className="text-slate-600 font-bold tracking-tight">Loading your reports…</p>
           </div>
         ) : filteredReports.length > 0 ? (
           <div className="grid grid-cols-1 divide-y divide-slate-50">
@@ -240,7 +240,7 @@ export default function MyReportList({ reports, loading, onEdit }: Props) {
               <MessageSquare className="w-10 h-10 text-slate-300" />
             </div>
             <h3 className="text-xl font-black text-slate-800 mb-2 tracking-tight">
-              Registry Empty
+              No reports yet
             </h3>
             <p className="text-slate-500 font-medium max-w-xs mx-auto text-sm leading-relaxed">
               {searchQuery

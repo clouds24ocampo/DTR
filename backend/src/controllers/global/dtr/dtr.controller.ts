@@ -185,6 +185,13 @@ export const getDTRsByUserId = async (req: Request, res: Response) => {
     if (!userId)
       return res.status(400).json({ message: "User ID is required" });
 
+    // Own records, or a role that manages attendance (DTR Tracking, exports).
+    const account = (req as Request & { account?: { _id?: unknown; position?: unknown } }).account;
+    const held = [account?.position].flat().map((p) => String(p ?? "").toLowerCase());
+    const manages = held.some((p) => /^(hr|workforce|operation manager|operations manager)$|team leader/.test(p));
+    if (String(account?._id) !== userId && !manages)
+      return res.status(403).json({ message: "You can only view your own DTR." });
+
     const dtrs = await getDTRsByUserIdService(userId);
     return res
       .status(200)

@@ -51,9 +51,9 @@ export default function ReportSummaryCards({
     },
     {
       id: "status:closed",
-      label: "Archived",
+      label: "Closed",
       count: closedCount,
-      sublabel: "Historical Data",
+      sublabel: "Completed reports",
       icon: ShieldCheck,
       color: "slate",
       gradient: "from-slate-500 to-slate-700"

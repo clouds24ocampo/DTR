@@ -73,7 +73,7 @@ const DetailModal = ({ open, title, items, onClose, type }: { open: boolean, tit
 
 export default function MyPayroll() {
     const { user, fetchUserLoading, fetchMe } = useUserStore();
-    const { payrolls, fetchPayrolls, loading } = usePayrollStore();
+    const { payrolls, fetchMyPayrolls, loading } = usePayrollStore();
     
     // State
     const [selectedYear, setSelectedYear] = useState(moment().year());
@@ -90,14 +90,11 @@ export default function MyPayroll() {
     // Fetch payrolls for current user
     useEffect(() => {
         if (user?._id) {
-            // Fetch for the whole year or just all payrolls
-            // Ideally backend supports year filtering, but for now we fetch range for the selected year
             const startOfYear = moment().year(selectedYear).startOf('year').format('YYYY-MM-DD');
             const endOfYear = moment().year(selectedYear).endOf('year').format('YYYY-MM-DD');
-            console.log(`Fetching payrolls for user ${user._id} (${startOfYear} to ${endOfYear})`);
-            fetchPayrolls(user._id, startOfYear, endOfYear);
+            fetchMyPayrolls(startOfYear, endOfYear);
         }
-    }, [user, selectedYear, fetchPayrolls]);
+    }, [user?._id, selectedYear, fetchMyPayrolls]);
 
     // Derived Data
     const sortedPayrolls = useMemo(() => {
@@ -112,9 +109,6 @@ export default function MyPayroll() {
             .sort((a, b) => new Date(b.periodEnd).getTime() - new Date(a.periodEnd).getTime());
     }, [payrolls, user]);
 
-    console.log('User:', user);
-    console.log('All Payrolls:', payrolls);
-    console.log('Sorted User Payrolls:', sortedPayrolls);
 
     // Handlers
     const handleViewDetails = (payroll: Payroll) => {

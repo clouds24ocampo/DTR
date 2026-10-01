@@ -107,7 +107,7 @@ export default function MyLeaveList({
         border: "border-amber-200",
         ring: "ring-amber-500/10",
         text: "text-amber-700",
-        label: "Awaiting Review"
+        label: "Pending"
       },
       approved: {
         icon: UserCheck,
@@ -116,7 +116,7 @@ export default function MyLeaveList({
         border: "border-emerald-200",
         ring: "ring-emerald-500/10",
         text: "text-emerald-700",
-        label: "Validated"
+        label: "Approved"
       },
       rejected: {
         icon: Ban,
@@ -125,7 +125,7 @@ export default function MyLeaveList({
         border: "border-rose-200",
         ring: "ring-rose-500/10",
         text: "text-rose-700",
-        label: "Not Approved"
+        label: "Declined"
       },
       canceled: {
         icon: XCircle,
@@ -134,7 +134,7 @@ export default function MyLeaveList({
         border: "border-slate-200",
         ring: "ring-slate-500/10",
         text: "text-slate-700",
-        label: "Archived"
+        label: "Cancelled"
       },
     };
     return configs[s] || configs.pending;
@@ -165,10 +165,10 @@ export default function MyLeaveList({
                 className="pl-9 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 cursor-pointer appearance-none shadow-sm transition-all"
               >
                 <option value="all">All Records</option>
-                <option value="pending">Awaiting Review</option>
-                <option value="approved">Validated</option>
-                <option value="rejected">Not Approved</option>
-                <option value="canceled">Archived</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Declined</option>
+                <option value="canceled">Cancelled</option>
               </select>
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                 <div className="w-1.5 h-1.5 border-r-2 border-b-2 border-slate-400 rotate-45" />
@@ -182,20 +182,20 @@ export default function MyLeaveList({
         </div>
       </div>
 
-      {/* Registry Table */}
+      {/* Requests table */}
       <div className="overflow-hidden">
         <div className="min-w-full divide-y divide-slate-100">
           <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-slate-50/50">
             <div className="col-span-2 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <Zap className="w-3 h-3" /> Class
+              <Zap className="w-3 h-3" /> Type
             </div>
             <div className="col-span-3 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <CalendarDays className="w-3 h-3" /> Schedule
             </div>
-            <div className="col-span-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Justification</div>
+            <div className="col-span-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Reason</div>
             <div className="col-span-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Approvals</div>
-            <div className="col-span-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Current Stage</div>
-            <div className="col-span-1 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest pr-4">Handle</div>
+            <div className="col-span-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</div>
+            <div className="col-span-1 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest pr-4">Actions</div>
           </div>
 
           <div className="divide-y divide-slate-50 min-h-[400px]">
@@ -320,7 +320,7 @@ export default function MyLeaveList({
                 <div className="w-16 h-16 mx-auto bg-slate-50 rounded-lg flex items-center justify-center mb-4 ring-1 ring-slate-100">
                   <ShieldCheck className="w-8 h-8 text-slate-300" />
                 </div>
-                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Registry Empty</h3>
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">No leave requests</h3>
                 <p className="text-xs font-bold text-slate-400 mt-1 italic">No records match your current search.</p>
               </div>
             )}
@@ -459,7 +459,7 @@ export default function MyLeaveList({
                   onClick={() => setShowReviewModal(false)}
                   className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-black text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
                 >
-                  Close Registry Details
+                  Close
                 </button>
               </div>
             </motion.div>
