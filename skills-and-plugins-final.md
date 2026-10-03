@@ -20,7 +20,7 @@
 > **Purpose of pack:** Reduces AI output tokens by **65–75%** by making the agent respond in compressed "caveman-speak" — technical code, commands, and errors stay 100% intact, but filler words are stripped. Saves money and speeds up responses dramatically.
 
 | Skill | Purpose |
-|-------|---------|
+| ------- | --------- |
 | 🦴 `caveman` | **Core skill** — makes agent respond in ultra-compressed language. "Bug in code. Fix: use `<`." instead of long paragraphs. Cuts output tokens by 65–75% |
 | 🦴 `caveman-commit` | Generates lean, meaningful git commit messages without verbose explanations |
 | 🦴 `caveman-compress` | Shrinks **input** tokens too — wraps agent reads so file content is compressed before sending to the model |
@@ -49,7 +49,7 @@
 > **Purpose of pack:** A battle-tested agentic skills framework and software development methodology. Teaches agents how to plan, delegate, review, and ship code like a senior engineering team.
 
 | Skill | Purpose |
-|-------|---------|
+| ------- | --------- |
 | 🧠 `brainstorming` | Runs structured brainstorming sessions — generates multiple approaches before committing to one solution |
 | 🧠 `dispatching-parallel-agents` | Splits large tasks into parallel sub-agents working simultaneously — dramatically speeds up complex work |
 | 🧠 `executing-plans` | Executes a pre-written plan step-by-step with verification checkpoints at each stage |
@@ -72,7 +72,7 @@
 > **Purpose of pack:** Gives the agent access to 50+ styles, 160+ color palettes, 50+ font pairings, 99+ UX principles, and 25+ chart types. Transforms generic AI-generated UI into distinctive, production-grade interfaces across 20+ tech stacks.
 
 | Skill | Purpose |
-|-------|---------|
+| ------- | --------- |
 | 🎨 `ui-ux-pro-max` | **Master design skill** — applies 99+ UX principles, curated color palettes, font pairings, and layout systems to generate production-grade UI instead of generic boilerplate |
 | 🎨 `design` | General design guidance — visual hierarchy, spacing, contrast, and aesthetic coherence |
 | 🎨 `design-system` | Creates and enforces consistent design systems — tokens, components, variants, and documentation |
@@ -88,7 +88,7 @@
 > **Purpose:** Catch bugs before humans do, enforce standards automatically, and keep code aligned with specs.
 
 | Skill | Purpose | Source |
-|-------|---------|--------|
+| ------- | --------- | -------- |
 | 🔎 `code-review-and-quality` | Automates systematic logic validation, catches drift against project specs, simplifies PR reviews | `addyosmani/agent-skills` |
 | 🔎 `qodo-get-rules` | Fetches your repo's specific coding rules from Qodo **before** generating code — ensures standards are met from the start | `qodo-ai/qodo-skills` |
 | 🔎 `qodo-pr-resolver` | Auto-resolves PR review comments in batch — fetches issues from GitHub/GitLab, applies fixes, and replies to inline comments with documentation | `qodo-ai/qodo-skills` |
@@ -115,7 +115,7 @@
 > **Purpose:** Ensure your code actually works by automating test writing and browser verification.
 
 | Skill | Purpose | Source |
-|-------|---------|--------|
+| ------- | --------- | -------- |
 | 🧪 `playwright-skill` | Uses **Playwright** to drive headless browsers — agents can execute and verify web app behavior automatically. 70+ patterns for E2E, API, component, visual, and accessibility testing | `testdino-hq/playwright-skill` |
 | 🧪 `browser-testing-with-devtools` | Advanced browser testing using Chrome DevTools Protocol — network interception, performance profiling, console monitoring | `addyosmani/agent-skills` |
 | 🧪 `test-driven-development` | Strict TDD loop — write failing tests first, then implement until all pass, then refactor | `addyosmani/agent-skills` |
@@ -127,7 +127,7 @@
 > **Purpose:** Prevent accidental leaks of API keys, passwords, and tokens before they ever reach Git history.
 
 | Skill | Purpose | Source |
-|-------|---------|--------|
+| ------- | --------- | -------- |
 | 🛡️ `scan-secrets` | Scans code changes in **real-time** for accidental secret leaks — catches API keys, tokens, credentials before Git commits | `gitguardian/agent-skills` |
 | 🛡️ `check-hmsl` | Checks if a leaked secret is **still active** using GitGuardian's "Has My Secret Leaked" service — tells you if rotation is urgent | `gitguardian/agent-skills` |
 | 🛡️ `install-hooks` | Installs **Git pre-commit hooks** that automatically block any commit containing secrets — silent protection | `gitguardian/agent-skills` |
@@ -154,7 +154,7 @@
 > **Purpose:** Transform a single AI agent into a coordinated team with distinct roles and responsibilities.
 
 | Skill | Purpose | Source |
-|-------|---------|--------|
+| ------- | --------- | -------- |
 | 👥 `gstack` | **Developer role router** — activates distinct behavioral modes: CEO (strategy), Designer (UI), Engineering Manager (architecture), QA (testing), and Release Manager (deployment) inside terminal agents | `garrytan/gstack` |
 | 🔧 `mcp-builder` | **Builds MCP servers** — manages Model Context Protocol servers, dynamically binds custom APIs, tool definitions, and playbooks to your agent session | `anthropics/skills` |
 | 📖 `using-agent-skills` | **Meta-skill** — teaches the agent how to discover, select, and correctly invoke other installed skills for maximum effectiveness | `addyosmani/agent-skills` |
@@ -166,7 +166,7 @@
 > **Purpose:** Break down complex features into structured, executable work before writing a single line of code.
 
 | Skill | Purpose | Source |
-|-------|---------|--------|
+| ------- | --------- | -------- |
 | 📋 `planning-and-task-breakdown` | Decomposes complex features into structured, ordered task lists with dependencies, risks, and acceptance criteria | `addyosmani/agent-skills` |
 | 📋 `incremental-implementation` | Ships features in small, reviewable increments — never more than one logical change at a time | `addyosmani/agent-skills` |
 | 📋 `idea-refine` | Sharpens vague ideas into concrete, actionable specs — asks clarifying questions and defines success criteria before coding | `addyosmani/agent-skills` |
@@ -179,7 +179,7 @@
 > **Purpose:** Automate the entire path from committed code to deployed production — reliably and repeatably.
 
 | Skill | Purpose | Source |
-|-------|---------|--------|
+| ------- | --------- | -------- |
 | 🚀 `shipping-and-launch` | Automates final deployment workflows — pre-launch checklists, release notes, environment config, and go-live verification | `addyosmani/agent-skills` |
 | 🚀 `ci-cd-and-automation` | Sets up CI/CD pipelines — GitHub Actions, deployment scripts, automated testing workflows, and release automation | `addyosmani/agent-skills` |
 | 🚀 `git-workflow-and-versioning` | Enforces Git branching strategies, semantic versioning, conventional commits, and clean history management | `addyosmani/agent-skills` |
@@ -281,7 +281,7 @@ npx -y skills add gitguardian/agent-skills -g
 ## 📊 Full Stats
 
 | Category | Skills |
-|----------|:------:|
+| ---------- | :------: |
 | 🔌 MCP Plugins | 1 |
 | 💀 Caveman (Token Compression) | 20 |
 | ⚡ Superpowers (Agentic Framework) | 14 |
@@ -304,7 +304,7 @@ npx -y skills add gitguardian/agent-skills -g
 
 ## 🗂️ Where Skills Are Stored
 
-```
+```text
 ~\.agents\skills\                       ← All 79 skills (auto-detected by Antigravity)
 ~\.gemini\config\mcp_config.json        ← Context7 MCP server config
 ~\.gemini\GEMINI.md                     ← Context7 usage rules injected here

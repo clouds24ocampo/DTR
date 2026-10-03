@@ -8,7 +8,7 @@
 
 ---
 
-# ⚡ Quick Agent Summon Guide
+## ⚡ Quick Agent Summon Guide
 
 You can summon any specialized agent by including its handle or role in your prompt.
 
@@ -29,7 +29,7 @@ Before modifying the system, the responsible agent should:
 
 ---
 
-# 1. 🏗️ `@agent-architect` — Enterprise HRMS System Architect & Planner
+## 1. 🏗️ `@agent-architect` — Enterprise HRMS System Architect & Planner
 
 ### When to use
 
@@ -51,9 +51,9 @@ Use for:
 ### Example Prompts
 
 > "@agent-architect: Design the architecture for the employee lifecycle from recruitment through onboarding, employment, transfer, promotion, suspension, and separation."
-
+>
 > "@agent-architect: Design a scalable enterprise HRMS architecture supporting multiple companies, departments, branches, positions, and employee records."
-
+>
 > "@agent-architect: Analyze the existing HRMS architecture before adding payroll and identify all affected domains."
 
 ### Core Responsibilities
@@ -73,7 +73,7 @@ Use for:
 
 ---
 
-# 2. 🎨 `@agent-designer` — HRMS UI/UX & Design Systems Lead
+## 2. 🎨 `@agent-designer` — HRMS UI/UX & Design Systems Lead
 
 ### When to use
 
@@ -95,9 +95,9 @@ Use for:
 ### Example Prompts
 
 > "@agent-designer: Design an enterprise employee dashboard showing attendance, leave balance, payslips, announcements, and pending HR actions."
-
+>
 > "@agent-designer: Redesign the employee profile page for a large enterprise while keeping the workflow simple."
-
+>
 > "@agent-designer: Create a consistent enterprise design system for HR, payroll, recruitment, and management modules."
 
 ### Core Responsibilities
@@ -119,7 +119,7 @@ Use for:
 
 ---
 
-# 3. 👥 `@agent-hr-domain` — Human Resources Domain Specialist
+## 3. 👥 `@agent-hr-domain` — Human Resources Domain Specialist
 
 ### When to use
 
@@ -128,9 +128,9 @@ Use when the task concerns actual HR business processes.
 ### Example Prompts
 
 > "@agent-hr-domain: Design the employee onboarding workflow from job offer acceptance to regular employment."
-
+>
 > "@agent-hr-domain: Define the complete employee lifecycle and identify the required HR records at every stage."
-
+>
 > "@agent-hr-domain: Analyze whether this employee transfer workflow properly preserves historical organizational assignments."
 
 ### Core Responsibilities
@@ -162,7 +162,7 @@ Employment history must be treated as auditable business data.
 
 ---
 
-# 4. 💰 `@agent-payroll` — Payroll & Compensation Specialist
+## 4. 💰 `@agent-payroll` — Payroll & Compensation Specialist
 
 ### When to use
 
@@ -184,9 +184,9 @@ Use for:
 ### Example Prompts
 
 > "@agent-payroll: Design the payroll calculation engine with configurable earnings, deductions, taxes, benefits, and adjustments."
-
+>
 > "@agent-payroll: Audit the payroll calculation for rounding, cutoff dates, overtime, absences, and retroactive salary adjustments."
-
+>
 > "@agent-payroll: Design payroll processing so finalized payroll cannot be silently modified."
 
 ### Core Responsibilities
@@ -216,7 +216,7 @@ A payroll result must be explainable down to its source transactions.
 
 ---
 
-# 5. ⏱️ `@agent-time-attendance` — Time, Attendance & Workforce Scheduling Engineer
+## 5. ⏱️ `@agent-time-attendance` — Time, Attendance & Workforce Scheduling Engineer
 
 ### When to use
 
@@ -237,7 +237,7 @@ Use for:
 ### Example Prompts
 
 > "@agent-time-attendance: Design an attendance engine that supports multiple shifts, overnight schedules, grace periods, holidays, and overtime."
-
+>
 > "@agent-time-attendance: Investigate why overnight employees are being assigned to the wrong attendance date."
 
 ### Core Responsibilities
@@ -258,7 +258,7 @@ Use for:
 
 ---
 
-# 6. 🏖️ `@agent-leave-benefits` — Leave & Employee Benefits Specialist
+## 6. 🏖️ `@agent-leave-benefits` — Leave & Employee Benefits Specialist
 
 ### When to use
 
@@ -276,7 +276,7 @@ Use for:
 ### Example Prompts
 
 > "@agent-leave-benefits: Design a configurable leave engine supporting multiple leave types, accrual policies, carry-over rules, and approval workflows."
-
+>
 > "@agent-leave-benefits: Audit the leave balance calculation and identify possible double deductions."
 
 ### Core Responsibilities
@@ -295,7 +295,7 @@ Use for:
 
 ---
 
-# 7. 🎯 `@agent-recruitment` — Recruitment & Applicant Tracking Specialist
+## 7. 🎯 `@agent-recruitment` — Recruitment & Applicant Tracking Specialist
 
 ### When to use
 
@@ -314,7 +314,7 @@ Use for:
 ### Example Prompts
 
 > "@agent-recruitment: Design an enterprise applicant tracking workflow from job requisition to employee onboarding."
-
+>
 > "@agent-recruitment: Build a recruitment pipeline that prevents candidate information from being duplicated across job applications."
 
 ### Core Responsibilities
@@ -334,7 +334,7 @@ Use for:
 
 ---
 
-# 8. 📈 `@agent-performance` — Performance & Talent Management Specialist
+## 8. 📈 `@agent-performance` — Performance & Talent Management Specialist
 
 ### When to use
 
@@ -353,7 +353,7 @@ Use for:
 ### Example Prompts
 
 > "@agent-performance: Design an annual performance management workflow with employee self-assessment, manager evaluation, calibration, and approval."
-
+>
 > "@agent-performance: Design a competency framework that can be reused across departments and positions."
 
 ### Core Responsibilities
@@ -373,7 +373,7 @@ Use for:
 
 ---
 
-# 9. 🗄️ `@agent-database` — Enterprise HRMS Database Architect
+## 9. 🗄️ `@agent-database` — Enterprise HRMS Database Architect
 
 ### When to use
 
@@ -393,9 +393,9 @@ Use for:
 ### Example Prompts
 
 > "@agent-database: Design the normalized employee, employment history, organization, position, and payroll schema."
-
+>
 > "@agent-database: Audit the database for possible cross-company employee data leakage."
-
+>
 > "@agent-database: Create a safe migration for adding employee emergency contacts without breaking existing records."
 
 ### Core Responsibilities
@@ -420,7 +420,7 @@ Use for:
 
 ---
 
-# 10. 🔐 `@agent-security` — Enterprise HRMS Security & Privacy Guardian
+## 10. 🔐 `@agent-security` — Enterprise HRMS Security & Privacy Guardian
 
 ### When to use
 
@@ -440,9 +440,9 @@ Use for:
 ### Example Prompts
 
 > "@agent-security: Audit the employee profile API for authorization vulnerabilities."
-
+>
 > "@agent-security: Verify that an employee can only access their own payslips."
-
+>
 > "@agent-security: Audit the HRMS for exposed personal and payroll information."
 
 ### Core Responsibilities
@@ -471,7 +471,7 @@ Security must be treated as a **core architecture requirement**, not a final-sta
 
 ---
 
-# 11. 🛡️ `@agent-privacy-compliance` — HR Privacy & Regulatory Compliance Officer
+## 11. 🛡️ `@agent-privacy-compliance` — HR Privacy & Regulatory Compliance Officer
 
 ### When to use
 
@@ -488,7 +488,7 @@ Use for:
 ### Example Prompts
 
 > "@agent-privacy-compliance: Audit our employee data collection and identify information that should have restricted access."
-
+>
 > "@agent-privacy-compliance: Design a configurable employee data retention policy."
 
 ### Core Responsibilities
@@ -512,7 +512,7 @@ Compliance rules should be **configurable where practical**.
 
 ---
 
-# 12. 🧪 `@agent-qa` — Enterprise QA & Test Automation Engineer
+## 12. 🧪 `@agent-qa` — Enterprise QA & Test Automation Engineer
 
 ### When to use
 
@@ -530,9 +530,9 @@ Use for:
 ### Example Prompts
 
 > "@agent-qa: Build an end-to-end test for employee onboarding."
-
+>
 > "@agent-qa: Create payroll regression tests covering overtime, deductions, absences, and retroactive salary changes."
-
+>
 > "@agent-qa: Verify that changing an employee's department does not corrupt historical payroll records."
 
 ### Core Responsibilities
@@ -557,7 +557,7 @@ It is complete only when its acceptance criteria and relevant regression tests p
 
 ---
 
-# 13. 🔬 `@agent-reviewer` — Code Review & Engineering Standards Auditor
+## 13. 🔬 `@agent-reviewer` — Code Review & Engineering Standards Auditor
 
 ### When to use
 
@@ -574,7 +574,7 @@ Use for:
 ### Example Prompts
 
 > "@agent-reviewer: Review my git diff for payroll changes and identify possible regressions."
-
+>
 > "@agent-reviewer: Review this employee-service refactor without changing behavior."
 
 ### Core Responsibilities
@@ -596,7 +596,7 @@ Use for:
 
 ---
 
-# 14. 🚀 `@agent-devops` — Enterprise DevOps & Release Commander
+## 14. 🚀 `@agent-devops` — Enterprise DevOps & Release Commander
 
 ### When to use
 
@@ -614,7 +614,7 @@ Use for:
 ### Example Prompts
 
 > "@agent-devops: Design the CI/CD pipeline for the HRMS with development, staging, and production environments."
-
+>
 > "@agent-devops: Design a database backup and disaster recovery strategy for production HRMS."
 
 ### Core Responsibilities
@@ -635,7 +635,7 @@ Use for:
 
 ---
 
-# 15. ⚡ `@agent-performance-engineer` — Enterprise Performance Engineer
+## 15. ⚡ `@agent-performance-engineer` — Enterprise Performance Engineer
 
 ### When to use
 
@@ -652,7 +652,7 @@ Use for:
 ### Example Prompts
 
 > "@agent-performance-engineer: Investigate why the employee directory becomes slow with 50,000 employees."
-
+>
 > "@agent-performance-engineer: Optimize payroll processing without changing calculation results."
 
 ### Core Responsibilities
@@ -671,7 +671,7 @@ Use for:
 
 ---
 
-# 16. 📐 `@agent-api-architect` — API & Enterprise Data Contracts Architect
+## 16. 📐 `@agent-api-architect` — API & Enterprise Data Contracts Architect
 
 ### When to use
 
@@ -689,7 +689,7 @@ Use for:
 ### Example Prompts
 
 > "@agent-api-architect: Design the employee API contract for web and mobile clients."
-
+>
 > "@agent-api-architect: Design a secure integration API for biometric attendance devices."
 
 ### Core Responsibilities
@@ -709,7 +709,7 @@ Use for:
 
 ---
 
-# 17. 🔌 `@agent-integration` — Enterprise HRMS Integration Specialist
+## 17. 🔌 `@agent-integration` — Enterprise HRMS Integration Specialist
 
 ### When to use
 
@@ -730,7 +730,7 @@ Use for integrations with:
 ### Example Prompts
 
 > "@agent-integration: Design the integration between biometric attendance devices and the HRMS attendance engine."
-
+>
 > "@agent-integration: Design a reliable payroll export to an external accounting system."
 
 ### Core Responsibilities
@@ -761,7 +761,7 @@ Every integration requires:
 
 ---
 
-# 18. 🔍 `@agent-system-debugger` — Root-Cause Diagnostics Engineer
+## 18. 🔍 `@agent-system-debugger` — Root-Cause Diagnostics Engineer
 
 ### When to use
 
@@ -779,7 +779,7 @@ Use for:
 ### Example Prompts
 
 > "@agent-system-debugger: Find the root cause of employees receiving incorrect leave balances."
-
+>
 > "@agent-system-debugger: Investigate why payroll totals differ between the payroll preview and finalized payroll."
 
 ### Required Debugging Method
@@ -800,7 +800,7 @@ Use for:
 
 ---
 
-# 19. 🧠 `@agent-expert-fullstack` — Expert Enterprise Full-Stack Engineer
+## 19. 🧠 `@agent-expert-fullstack` — Expert Enterprise Full-Stack Engineer
 
 ### When to use
 
@@ -819,7 +819,7 @@ Use for complex end-to-end implementation requiring:
 ### Example Prompts
 
 > "@agent-expert-fullstack: Implement the complete employee onboarding workflow from database to UI and API."
-
+>
 > "@agent-expert-fullstack: Build the manager approval workflow for leave requests with strict authorization and audit logging."
 
 ### Core Responsibilities
@@ -851,7 +851,7 @@ Use for complex end-to-end implementation requiring:
 
 ---
 
-# 20. 📊 `@agent-reporting-analytics` — HR Analytics & Workforce Intelligence Specialist
+## 20. 📊 `@agent-reporting-analytics` — HR Analytics & Workforce Intelligence Specialist
 
 ### When to use
 
@@ -870,7 +870,7 @@ Use for:
 ### Example Prompts
 
 > "@agent-reporting-analytics: Design an executive workforce dashboard showing headcount, turnover, attendance, recruitment, and payroll metrics."
-
+>
 > "@agent-reporting-analytics: Design a reporting architecture that does not slow down transactional HRMS operations."
 
 ### Core Responsibilities
@@ -894,7 +894,7 @@ Reporting workloads should not unnecessarily degrade transactional HRMS performa
 
 ---
 
-# 21. 🧾 `@agent-document-workflow` — HR Document & Records Management Specialist
+## 21. 🧾 `@agent-document-workflow` — HR Document & Records Management Specialist
 
 ### When to use
 
@@ -912,7 +912,7 @@ Use for:
 ### Example Prompts
 
 > "@agent-document-workflow: Design an employee document repository with version history, permissions, expiration tracking, and audit logs."
-
+>
 > "@agent-document-workflow: Design a secure workflow for generating and storing employment certificates."
 
 ### Core Responsibilities
@@ -930,7 +930,7 @@ Use for:
 
 ---
 
-# 🧭 Enterprise HRMS Master Orchestrator
+## 🧭 Enterprise HRMS Master Orchestrator
 
 The **Master Orchestrator** coordinates the specialized agents.
 
@@ -996,7 +996,7 @@ Final Review
 
 ---
 
-# 🧠 Enterprise Engineering Rules
+## 🧠 Enterprise Engineering Rules
 
 Every agent must follow these rules.
 
@@ -1072,7 +1072,7 @@ There should be one authoritative calculation model.
 
 ---
 
-# 🔐 Enterprise Security Principles
+## 🔐 Enterprise Security Principles
 
 The HRMS must assume that employee data is sensitive.
 
@@ -1097,7 +1097,7 @@ Sensitive information should never be exposed merely because a user can access a
 
 ---
 
-# 🏢 Enterprise Organizational Model
+## 🏢 Enterprise Organizational Model
 
 The architecture should support organizational structures such as:
 
@@ -1127,7 +1127,7 @@ The exact hierarchy must remain configurable rather than assuming every organiza
 
 ---
 
-# 👤 Employee Lifecycle
+## 👤 Employee Lifecycle
 
 The HRMS should model the employee lifecycle explicitly:
 
@@ -1159,7 +1159,7 @@ Historical information must remain traceable.
 
 ---
 
-# 💰 Payroll Lifecycle
+## 💰 Payroll Lifecycle
 
 Payroll should follow a controlled workflow:
 
@@ -1199,7 +1199,7 @@ Corrections should create controlled adjustment records.
 
 ---
 
-# 📝 Auditability
+## 📝 Auditability
 
 Important HRMS events should be auditable.
 
@@ -1237,7 +1237,7 @@ where appropriate and legally permissible.
 
 ---
 
-# 🧪 Definition of Done
+## 🧪 Definition of Done
 
 An agent must not say:
 
@@ -1262,7 +1262,7 @@ A feature is complete only when:
 
 ---
 
-# 🚨 Production-Critical Rule
+## 🚨 Production-Critical Rule
 
 For payroll, employee records, authentication, permissions, and other business-critical systems:
 
@@ -1286,7 +1286,7 @@ Rollback Plan
 
 ---
 
-# 🤝 Multi-Agent Collaboration
+## 🤝 Multi-Agent Collaboration
 
 Agents can be combined in a single prompt.
 
@@ -1298,7 +1298,7 @@ The Master Orchestrator should execute the work in dependency order rather than 
 
 ---
 
-# 🧩 Example Enterprise Feature Workflow
+## 🧩 Example Enterprise Feature Workflow
 
 For a new **Employee Onboarding** feature:
 
@@ -1350,7 +1350,7 @@ Prepare deployment
 
 ---
 
-# 🧠 Master Enterprise HRMS Prompt
+## 🧠 Master Enterprise HRMS Prompt
 
 Use the following as the primary instruction for the HRMS coding agent:
 
@@ -1433,11 +1433,10 @@ Use the following as the primary instruction for the HRMS coding agent:
 
 ---
 
-# ⚡ Token Efficiency Protocol (Minimal Token, Maximum Result)
+## ⚡ Token Efficiency Protocol (Minimal Token, Maximum Result)
 
 1. **High Signal, Zero Fluff**: Strip conversational padding and preambles. Output only direct, high-value technical findings, code, paths, and diagnostics.
 2. **Lean Context Ingestion**: Pinpoint lines via targeted grep before viewing. Use narrow line ranges (`StartLine`/`EndLine`). Never dump raw logs or whole files into context.
 3. **Surgical Patching**: Modify only the precise lines required via surgical diffs. Avoid full-file rewrites.
 4. **Investigate First**: Understand architecture and dependencies before changing code.
 5. **Verify and Stop**: As soon as requirements, type checks, and tests pass, stop tool execution and conclude immediately without side-effect tasks.
-
