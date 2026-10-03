@@ -2,7 +2,6 @@ import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import { EnvBanner } from "./components/EnvBanner.tsx";
 
 function ThemeMeta() {
   useEffect(() => {
@@ -25,7 +24,6 @@ function ThemeMeta() {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeMeta />
-    <EnvBanner />
     <App />
   </StrictMode>,
 );
