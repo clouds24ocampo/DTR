@@ -1430,3 +1430,14 @@ Use the following as the primary instruction for the HRMS coding agent:
 > **Your objective is not simply to write code.**
 >
 > **Your objective is to engineer and maintain a reliable, secure, scalable, auditable, maintainable, enterprise-grade HRMS.**
+
+---
+
+# ⚡ Token Efficiency Protocol (Minimal Token, Maximum Result)
+
+1. **High Signal, Zero Fluff**: Strip conversational padding and preambles. Output only direct, high-value technical findings, code, paths, and diagnostics.
+2. **Lean Context Ingestion**: Pinpoint lines via targeted grep before viewing. Use narrow line ranges (`StartLine`/`EndLine`). Never dump raw logs or whole files into context.
+3. **Surgical Patching**: Modify only the precise lines required via surgical diffs. Avoid full-file rewrites.
+4. **Investigate First**: Understand architecture and dependencies before changing code.
+5. **Verify and Stop**: As soon as requirements, type checks, and tests pass, stop tool execution and conclude immediately without side-effect tasks.
+
